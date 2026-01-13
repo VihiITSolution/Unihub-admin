@@ -42,7 +42,7 @@ export const getInitials = (name: string): string => {
 /**
  * Check if a value is empty
  */
-export const isEmpty = (value: any): boolean => {
+export const isEmpty = (value: unknown): boolean => {
   if (value == null) return true;
   if (typeof value === 'string') return value.trim().length === 0;
   if (Array.isArray(value)) return value.length === 0;

@@ -16,7 +16,7 @@ A modern, responsive admin panel for managing the Unihub.lk platform built with 
 
 ## Tech Stack
 
-- **Framework:** Next.js 14 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **UI Components:** Custom components built with Tailwind

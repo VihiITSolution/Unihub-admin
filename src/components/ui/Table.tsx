@@ -5,13 +5,13 @@ interface Column {
   label: string;
 }
 
-interface TableProps {
+interface TableProps<T = Record<string, string | number>> {
   columns: Column[];
-  data: Record<string, any>[];
+  data: T[];
   className?: string;
 }
 
-const Table: React.FC<TableProps> = ({ columns, data, className = '' }) => {
+const Table = <T extends Record<string, string | number>>({ columns, data, className = '' }: TableProps<T>) => {
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="min-w-full divide-y divide-gray-200">
