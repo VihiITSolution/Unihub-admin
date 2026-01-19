@@ -3,7 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
+import YouTubePlayer from '@/components/ui/YouTubePlayer';
 import { adminService, CourseDetails } from '@/services/admin.service';
+
+// Helper function to extract YouTube video ID
+const getYouTubeId = (url: string): string | null => {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+};
 
 export default function CourseReviewPage() {
   const params = useParams();
@@ -111,6 +118,7 @@ export default function CourseReviewPage() {
   const { course, courseContent } = courseDetails;
   const tutor = course.tutor;
   const tutorProfile = tutor?.tutorProfile;
+  const isPublished = course.isPublished;
 
   return (
     <div className="space-y-6">
@@ -118,13 +126,19 @@ export default function CourseReviewPage() {
       <div className="flex items-center justify-between">
         <div>
           <button
-            onClick={() => router.push('/courses/pending')}
+            onClick={() => router.back()}
             className="text-gray-500 hover:text-gray-700 mb-2 flex items-center"
           >
-            ← Back to Pending Courses
+            ← Back
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Review Course</h1>
-          <p className="text-gray-600 mt-1">Review course content and tutor qualifications before approval</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isPublished ? 'Manage Course' : 'Review Course'}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {isPublished 
+              ? 'View course details and manage publication status' 
+              : 'Review course content and tutor qualifications before approval'}
+          </p>
         </div>
         <div className="flex space-x-3">
           <button
@@ -132,15 +146,17 @@ export default function CourseReviewPage() {
             disabled={isProcessing}
             className="px-6 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
           >
-            Reject
+            {isPublished ? 'Disable Course' : 'Reject'}
           </button>
-          <button
-            onClick={handleApprove}
-            disabled={isProcessing}
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {isProcessing ? 'Processing...' : 'Approve Course'}
-          </button>
+          {!isPublished && (
+            <button
+              onClick={handleApprove}
+              disabled={isProcessing}
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {isProcessing ? 'Processing...' : 'Approve Course'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -196,27 +212,13 @@ export default function CourseReviewPage() {
               {(() => {
                 const videoUrl = (course as any).videoUrl;
                 if (!videoUrl) return null;
-                
-                // Extract YouTube video ID
-                const getYouTubeId = (url: string) => {
-                  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-                  return match ? match[1] : null;
-                };
                 const videoId = getYouTubeId(videoUrl);
                 
                 if (videoId) {
                   return (
                     <div className="mt-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">Course Preview Video</h3>
-                      <div className="aspect-video rounded-lg overflow-hidden">
-                        <iframe
-                          src={`https://www.youtube.com/embed/${videoId}`}
-                          title="Course Preview"
-                          className="w-full h-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
+                      <YouTubePlayer videoId={videoId} title="Course Preview" />
                     </div>
                   );
                 }
@@ -274,15 +276,7 @@ export default function CourseReviewPage() {
                         </div>
                       </div>
                       {videoId && (
-                        <div className="aspect-video">
-                          <iframe
-                            src={`https://www.youtube.com/embed/${videoId}`}
-                            title={content.title}
-                            className="w-full h-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          />
-                        </div>
+                        <YouTubePlayer videoId={videoId} title={content.title} />
                       )}
                       {content.url && !videoId && (
                         <div className="p-3 bg-gray-100 text-center">
@@ -423,18 +417,20 @@ export default function CourseReviewPage() {
         </div>
       </div>
 
-      {/* Reject Modal */}
+      {/* Reject/Disable Modal */}
       {rejectModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Reject Course</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              {isPublished ? 'Disable Course' : 'Reject Course'}
+            </h3>
             <p className="text-gray-600 mb-4">
-              You are rejecting: <strong>{course.title}</strong>
+              You are {isPublished ? 'disabling' : 'rejecting'}: <strong>{course.title}</strong>
             </p>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Please provide a reason for rejection..."
+              placeholder={`Please provide a reason for ${isPublished ? 'disabling' : 'rejection'}...`}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[100px]"
             />
             <div className="flex justify-end space-x-2 mt-4">
@@ -449,7 +445,7 @@ export default function CourseReviewPage() {
                 disabled={isProcessing || !rejectReason.trim()}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
               >
-                {isProcessing ? 'Rejecting...' : 'Reject Course'}
+                {isProcessing ? 'Processing...' : (isPublished ? 'Disable Course' : 'Reject Course')}
               </button>
             </div>
           </div>

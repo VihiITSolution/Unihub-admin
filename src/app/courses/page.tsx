@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import { adminService, Course } from '@/services/admin.service';
 
 export default function CoursesPage() {
+  const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function CoursesPage() {
     { 
       key: 'price', 
       label: 'Price',
-      render: (course: Course) => `$${course.price.toFixed(2)}`
+      render: (course: Course) => `$${Number(course.price).toFixed(2)}`
     },
     { 
       key: 'status', 
@@ -75,6 +77,18 @@ export default function CoursesPage() {
       key: 'created', 
       label: 'Created',
       render: (course: Course) => new Date(course.createdAt).toLocaleDateString()
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (course: Course) => (
+        <button
+          onClick={() => router.push(`/courses/review/${course.id}`)}
+          className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
+        >
+          View / Manage
+        </button>
+      )
     }
   ];
 
