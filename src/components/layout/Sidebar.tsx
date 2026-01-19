@@ -2,10 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout, user } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const menuItems = [
     {
@@ -45,6 +53,15 @@ const Sidebar: React.FC = () => {
       path: '/courses',
     },
     {
+      name: 'Pending Approvals',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      path: '/courses/pending',
+    },
+    {
       name: 'Analytics',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,8 +83,8 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
-      <nav className="px-4 py-6 space-y-2">
+    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
+      <nav className="px-4 py-6 space-y-2 flex-1">
         {menuItems.map((item) => {
           const isActive = pathname === item.path;
           return (
@@ -86,6 +103,25 @@ const Sidebar: React.FC = () => {
           );
         })}
       </nav>
+
+      {/* User info and logout */}
+      <div className="px-4 py-4 border-t border-gray-200">
+        {user && (
+          <div className="mb-3 px-4">
+            <p className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</p>
+            <p className="text-xs text-gray-500">{user.email}</p>
+          </div>
+        )}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
     </aside>
   );
 };
