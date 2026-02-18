@@ -1,0 +1,36 @@
+# Ignore node modules
+node_modules
+npm-debug.log
+
+# Ignore Next.js build output
+.next
+out
+
+# Ignore local environment files
+.env*.local
+.env.development
+.env.test
+
+# Ignore git files
+.git
+.gitignore
+
+# Ignore documentation
+*.md
+!README.md
+
+# Ignore test files
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Ignore development files
+.vscode
+.idea
+*.log
+
+# Ignore unnecessary files
+.DS_Store
+Thumbs.db
