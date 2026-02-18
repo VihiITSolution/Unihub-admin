@@ -32,6 +32,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
           build-args: |
             NEXT_PUBLIC_BASE_PATH=/admin
+            NEXT_PUBLIC_API_BASE_URL=${{ secrets.API_BASE_URL }}
 
       - name: Deploy to Digital Ocean
         uses: appleboy/ssh-action@v1.0.0
@@ -45,5 +46,5 @@ jobs:
             docker stop unihub-admin || true
             docker rm unihub-admin || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
-            docker run -d --name unihub-admin --network unihub-network --restart unless-stopped -e NODE_ENV=production  -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN }} -e NEXT_PUBLIC_API_BASE_URL=${{ secrets.API_BASE_URL }} ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
+            docker run -d --name unihub-admin --network unihub-network --restart unless-stopped -e NODE_ENV=production ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
             docker image prune -f
