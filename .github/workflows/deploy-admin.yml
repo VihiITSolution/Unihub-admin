@@ -45,5 +45,5 @@ jobs:
             docker stop unihub-admin || true
             docker rm unihub-admin || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
-            docker run -d --name unihub-admin --network unihub-network --restart unless-stopped -e NODE_ENV=production -e NEXT_PUBLIC_API_BASE_URL=${{ secrets.API_BASE_URL }} ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
+            docker run -d --name unihub-admin --network unihub-network --restart unless-stopped -e NODE_ENV=production  -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN }} -e NEXT_PUBLIC_API_BASE_URL=${{ secrets.API_BASE_URL }} ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
             docker image prune -f
