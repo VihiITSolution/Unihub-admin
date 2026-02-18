@@ -28,11 +28,10 @@ jobs:
         with:
           context: .
           push: true
+          no-cache: true
           tags: ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/unihub-admin:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/unihub-admin:buildcache,mode=max
           build-args: |
-             NEXT_PUBLIC_BASE_PATH=/admin
+            NEXT_PUBLIC_BASE_PATH=/admin
 
       - name: Deploy to Digital Ocean
         uses: appleboy/ssh-action@v1.0.0
