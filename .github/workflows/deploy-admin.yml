@@ -38,13 +38,14 @@ jobs:
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/unihub-admin:buildcache,mode=max
 
       # Step 5: Deploy to Digital Ocean Droplet
-      - name: Deploy to Digital Ocean
+      - name: Deploy to Digital Ocean 
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
+            set -e
             # Login to Docker Hub
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
