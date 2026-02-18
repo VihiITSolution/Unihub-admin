@@ -6,7 +6,7 @@ import axios, {
 
 // Base API URL - change this in production
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
 // Token storage keys
 const TOKEN_KEY = "admin_token";
