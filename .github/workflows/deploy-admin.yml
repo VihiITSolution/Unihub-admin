@@ -60,7 +60,7 @@ jobs:
               --name unihub-admin \
               --network unihub-network \
               --restart unless-stopped \
-              -p 3000:3000 \
+              -p 3002:3002 \
               -e NODE_ENV=production \
               -e NEXT_PUBLIC_API_BASE_URL=${{ secrets.API_BASE_URL }} \
               ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
