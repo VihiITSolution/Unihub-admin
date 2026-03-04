@@ -314,9 +314,9 @@ export const adminService = {
     /**
      * Approve a marketplace item
      */
-    async approveMarketplaceItem(itemId: number): Promise<ApiResponse> {
+    async approveMarketplaceItem(itemId: number): Promise<ApiResponse<any>> {
         try {
-            const response = await apiClient.put<ApiResponse>(`/admin/marketplace/${itemId}/approve`);
+            const response = await apiClient.put<ApiResponse<any>>(`/admin/marketplace/${itemId}/approve`);
             return response.data;
         } catch (error: any) {
             return {
@@ -329,9 +329,9 @@ export const adminService = {
     /**
      * Reject a marketplace item
      */
-    async rejectMarketplaceItem(itemId: number, reason: string): Promise<ApiResponse> {
+    async rejectMarketplaceItem(itemId: number, reason: string): Promise<ApiResponse<any>> {
         try {
-            const response = await apiClient.put<ApiResponse>(`/admin/marketplace/${itemId}/reject`, { reason });
+            const response = await apiClient.put<ApiResponse<any>>(`/admin/marketplace/${itemId}/reject`, { reason });
             return response.data;
         } catch (error: any) {
             return {
@@ -360,10 +360,10 @@ export const adminService = {
     /**
      * Verify (approve) bank transfer payment
      */
-    async verifyBankTransfer(paymentId: number): Promise<ApiResponse> {
+    async verifyBankTransfer(paymentId: number): Promise<ApiResponse<any>> {
         try {
-            const response = await apiClient.put<ApiResponse>(`/admin/payments/${paymentId}/verify`, { 
-                action: 'approve' 
+            const response = await apiClient.put<ApiResponse<any>>(`/admin/payments/${paymentId}/verify`, {
+                action: 'approve'
             });
             return response.data;
         } catch (error: any) {
@@ -377,11 +377,11 @@ export const adminService = {
     /**
      * Reject bank transfer payment
      */
-    async rejectBankTransfer(paymentId: number, reason: string): Promise<ApiResponse> {
+    async rejectBankTransfer(paymentId: number, reason: string): Promise<ApiResponse<any>> {
         try {
-            const response = await apiClient.put<ApiResponse>(`/admin/payments/${paymentId}/verify`, { 
+            const response = await apiClient.put<ApiResponse<any>>(`/admin/payments/${paymentId}/verify`, {
                 action: 'reject',
-                reason 
+                reason
             });
             return response.data;
         } catch (error: any) {
