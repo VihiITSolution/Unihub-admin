@@ -59,6 +59,17 @@ export interface MarketplaceItem {
     };
     category?: string;
     images?: string[];
+    // Payment and approval fields
+    isPaid: boolean;
+    adFee?: number;
+    paidAt?: string;
+    paymentId?: number;
+    approvalStatus: 'pending' | 'approved' | 'rejected';
+    approvedBy?: number;
+    approvedAt?: string;
+    rejectionReason?: string;
+    expiresAt?: string;
+    requiresPayment: boolean;
     createdAt: string;
 }
 
@@ -280,6 +291,103 @@ export const adminService = {
             return {
                 success: false,
                 message: error.response?.data?.message || 'Failed to fetch course details'
+            };
+        }
+    },
+
+    /**
+     * Get pending marketplace items (paid but awaiting approval)
+     */
+    async getPendingMarketplaceItems(): Promise<ApiResponse<{ items: MarketplaceItem[] }>> {
+        try {
+            const response = await apiClient.get<ApiResponse<{ items: MarketplaceItem[] }>>('/admin/marketplace/pending');
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to fetch pending items',
+                data: { items: [] }
+            };
+        }
+    },
+
+    /**
+     * Approve a marketplace item
+     */
+    async approveMarketplaceItem(itemId: number): Promise<ApiResponse> {
+        try {
+            const response = await apiClient.put<ApiResponse>(`/admin/marketplace/${itemId}/approve`);
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to approve item'
+            };
+        }
+    },
+
+    /**
+     * Reject a marketplace item
+     */
+    async rejectMarketplaceItem(itemId: number, reason: string): Promise<ApiResponse> {
+        try {
+            const response = await apiClient.put<ApiResponse>(`/admin/marketplace/${itemId}/reject`, { reason });
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to reject item'
+            };
+        }
+    },
+
+    /**
+     * Get pending bank transfer payments
+     */
+    async getPendingBankTransfers(): Promise<ApiResponse<{ payments: any[] }>> {
+        try {
+            const response = await apiClient.get<ApiResponse<{ payments: any[] }>>('/admin/payments/bank-transfers/pending');
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to fetch pending transfers',
+                data: { payments: [] }
+            };
+        }
+    },
+
+    /**
+     * Verify (approve) bank transfer payment
+     */
+    async verifyBankTransfer(paymentId: number): Promise<ApiResponse> {
+        try {
+            const response = await apiClient.put<ApiResponse>(`/admin/payments/${paymentId}/verify`, { 
+                action: 'approve' 
+            });
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to verify payment'
+            };
+        }
+    },
+
+    /**
+     * Reject bank transfer payment
+     */
+    async rejectBankTransfer(paymentId: number, reason: string): Promise<ApiResponse> {
+        try {
+            const response = await apiClient.put<ApiResponse>(`/admin/payments/${paymentId}/verify`, { 
+                action: 'reject',
+                reason 
+            });
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to reject payment'
             };
         }
     }
