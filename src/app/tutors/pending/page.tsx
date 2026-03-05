@@ -24,6 +24,15 @@ export default function PendingTutorsPage() {
     totalPages: 0,
   });
 
+  // Log component version on mount
+  useEffect(() => {
+    console.log("📋 ===============================================");
+    console.log("📋 PENDING TUTORS PAGE LOADED - VERSION 2.0");
+    console.log("📋 ===============================================");
+    console.log("📋 Loaded at:", new Date().toISOString());
+    console.log("📋 Features: Enhanced logging, success alerts");
+  }, []);
+
   useEffect(() => {
     fetchTutorApplications();
   }, [pagination.page]);
@@ -58,53 +67,102 @@ export default function PendingTutorsPage() {
   };
 
   const handleApprove = async () => {
-    if (!selectedTutor) return;
+    console.log("🚀 ============================================");
+    console.log("🚀 PENDING PAGE - APPROVE CLICKED - VERSION 2.0");
+    console.log("🚀 ============================================");
+    console.log("🚀 Timestamp:", new Date().toISOString());
+    
+    if (!selectedTutor) {
+      console.log("❌ No tutor selected");
+      return;
+    }
 
+    console.log("📝 Selected tutor:", selectedTutor.id, selectedTutor.user?.firstName, selectedTutor.user?.lastName);
     setActionLoading(true);
     try {
+      console.log("🔄 Calling API to approve tutor...");
       const response = await adminService.approveTutorApplication(
         selectedTutor.id,
       );
+      
+      console.log("📦 ============================================");
+      console.log("📦 API RESPONSE:", response);
+      console.log("📦 Success:", response.success);
+      console.log("📦 ============================================");
 
       if (response.success) {
+        console.log("✅ APPROVAL SUCCESSFUL! Refreshing list...");
+        alert("✅ Tutor approved successfully! Notification sent.");
         setShowApproveModal(false);
         setSelectedTutor(null);
         fetchTutorApplications(); // Refresh list
+        console.log("✅ List refreshed");
       } else {
+        console.error("❌ APPROVAL FAILED:", response.message);
         alert(response.message || "Failed to approve application");
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error("🛑 ============================================");
+      console.error("🛑 APPROVAL ERROR:", err);
+      console.error("🛑 Error message:", err?.message);
+      console.error("🛑 Stack:", err?.stack);
+      console.error("🛑 ============================================");
       alert("An error occurred while approving the application");
     } finally {
       setActionLoading(false);
+      console.log("🏁 Approve operation completed");
     }
   };
 
   const handleReject = async () => {
+    console.log("🔴 ============================================");
+    console.log("🔴 PENDING PAGE - REJECT CLICKED - VERSION 2.0");
+    console.log("🔴 ============================================");
+    console.log("🔴 Timestamp:", new Date().toISOString());
+    
     if (!selectedTutor || !rejectionReason.trim()) {
+      console.log("⚠️ No tutor selected or reason missing");
       alert("Please provide a rejection reason");
       return;
     }
 
+    console.log("📝 Selected tutor:", selectedTutor.id, selectedTutor.user?.firstName, selectedTutor.user?.lastName);
+    console.log("📝 Rejection reason:", rejectionReason);
     setActionLoading(true);
     try {
+      console.log("🔄 Calling API to reject tutor...");
       const response = await adminService.rejectTutorApplication(
         selectedTutor.id,
         rejectionReason,
       );
+      
+      console.log("📦 ============================================");
+      console.log("📦 API RESPONSE:", response);
+      console.log("📦 Success:", response.success);
+      console.log("📦 ============================================");
 
       if (response.success) {
+        console.log("✅ REJECTION SUCCESSFUL! Refreshing list...");
+        alert("✅ Tutor rejected successfully! Notification sent.");
         setShowRejectModal(false);
         setSelectedTutor(null);
         setRejectionReason("");
         fetchTutorApplications(); // Refresh list
+        console.log("✅ List refreshed");
       } else {
+        console.error("❌ REJECTION FAILED:", response.message);
         alert(response.message || "Failed to reject application");
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error("🛑 ============================================");
+      console.error("🛑 REJECTION ERROR:", err);
+      console.error("🛑 Error message:", err?.message);
+      console.error("🛑 Stack:", err?.stack);
+      console.error("🛑 ============================================");
       alert("An error occurred while rejecting the application");
     } finally {
       setActionLoading(false);
+      console.log("🏁 Reject operation completed");
     }
   };
 
