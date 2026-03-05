@@ -511,16 +511,25 @@ export const adminService = {
     tutorProfileId: number,
   ): Promise<ApiResponse<TutorProfile>> {
     try {
+      console.log(
+        `[Admin Service] Approving tutor application ID: ${tutorProfileId}`,
+      );
       const response = await apiClient.post<ApiResponse<TutorProfile>>(
         `/profile/tutor/applications/${tutorProfileId}/review`,
         { action: "approve" },
       );
+      console.log("[Admin Service] Approve response:", response.data);
       return response.data;
     } catch (error: any) {
+      console.error(
+        "[Admin Service] Approve error:",
+        error.response?.data || error.message,
+      );
       return {
         success: false,
         message:
           error.response?.data?.message ||
+          error.message ||
           "Failed to approve tutor application",
       };
     }
@@ -534,16 +543,26 @@ export const adminService = {
     rejectionReason: string,
   ): Promise<ApiResponse<TutorProfile>> {
     try {
+      console.log(
+        `[Admin Service] Rejecting tutor application ID: ${tutorProfileId}`,
+      );
       const response = await apiClient.post<ApiResponse<TutorProfile>>(
         `/profile/tutor/applications/${tutorProfileId}/review`,
         { action: "reject", rejectionReason },
       );
+      console.log("[Admin Service] Reject response:", response.data);
       return response.data;
     } catch (error: any) {
+      console.error(
+        "[Admin Service] Reject error:",
+        error.response?.data || error.message,
+      );
       return {
         success: false,
         message:
-          error.response?.data?.message || "Failed to reject tutor application",
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to reject tutor application",
       };
     }
   },

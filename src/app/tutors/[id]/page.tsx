@@ -46,16 +46,26 @@ export default function TutorDetailsPage() {
 
     setActionLoading(true);
     try {
+      console.log("Approving tutor application:", tutor.id);
       const response = await adminService.approveTutorApplication(tutor.id);
+      console.log("Approve response:", response);
 
       if (response.success) {
+        alert(
+          "✅ Tutor application approved successfully! Notification sent to the user.",
+        );
         setShowApproveModal(false);
-        router.push("/tutors/pending");
+        // Refresh the page to show updated status instead of redirecting
+        await fetchTutorDetails();
       } else {
-        alert(response.message || "Failed to approve application");
+        console.error("Approve failed:", response.message);
+        alert(`❌ Failed to approve: ${response.message || "Unknown error"}`);
       }
-    } catch (err) {
-      alert("An error occurred while approving the application");
+    } catch (err: any) {
+      console.error("Approve error:", err);
+      alert(
+        `❌ Error: ${err?.message || "An error occurred while approving the application"}`,
+      );
     } finally {
       setActionLoading(false);
     }
@@ -63,25 +73,39 @@ export default function TutorDetailsPage() {
 
   const handleReject = async () => {
     if (!tutor || !rejectionReason.trim()) {
-      alert("Please provide a rejection reason");
+      alert("⚠️ Please provide a rejection reason");
       return;
     }
 
     setActionLoading(true);
     try {
+      console.log(
+        "Rejecting tutor application:",
+        tutor.id,
+        "Reason:",
+        rejectionReason,
+      );
       const response = await adminService.rejectTutorApplication(
         tutor.id,
         rejectionReason,
       );
+      console.log("Reject response:", response);
 
       if (response.success) {
+        alert("✅ Tutor application rejected. Notification sent to the user.");
         setShowRejectModal(false);
-        router.push("/tutors/pending");
+        setRejectionReason("");
+        // Refresh the page to show updated status instead of redirecting
+        await fetchTutorDetails();
       } else {
-        alert(response.message || "Failed to reject application");
+        console.error("Reject failed:", response.message);
+        alert(`❌ Failed to reject: ${response.message || "Unknown error"}`);
       }
-    } catch (err) {
-      alert("An error occurred while rejecting the application");
+    } catch (err: any) {
+      console.error("Reject error:", err);
+      alert(
+        `❌ Error: ${err?.message || "An error occurred while rejecting the application"}`,
+      );
     } finally {
       setActionLoading(false);
     }
