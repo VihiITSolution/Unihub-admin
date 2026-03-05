@@ -108,10 +108,11 @@ export interface ApiResponse<T> {
 
 export interface PaginatedResponse<T> {
   success: boolean;
-  data: {
+  data?: {
     items?: T[];
     users?: T[];
     courses?: T[];
+    tutorProfiles?: T[];
     pagination: {
       total: number;
       page: number;
@@ -119,6 +120,7 @@ export interface PaginatedResponse<T> {
       totalPages: number;
     };
   };
+  message?: string;
 }
 
 export { apiClient, API_BASE_URL, TOKEN_KEY, USER_KEY };
