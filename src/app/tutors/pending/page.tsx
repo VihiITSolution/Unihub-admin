@@ -71,20 +71,25 @@ export default function PendingTutorsPage() {
     console.log("🚀 PENDING PAGE - APPROVE CLICKED - VERSION 2.0");
     console.log("🚀 ============================================");
     console.log("🚀 Timestamp:", new Date().toISOString());
-    
+
     if (!selectedTutor) {
       console.log("❌ No tutor selected");
       return;
     }
 
-    console.log("📝 Selected tutor:", selectedTutor.id, selectedTutor.user?.firstName, selectedTutor.user?.lastName);
+    console.log(
+      "📝 Selected tutor:",
+      selectedTutor.id,
+      selectedTutor.user?.firstName,
+      selectedTutor.user?.lastName,
+    );
     setActionLoading(true);
     try {
       console.log("🔄 Calling API to approve tutor...");
       const response = await adminService.approveTutorApplication(
         selectedTutor.id,
       );
-      
+
       console.log("📦 ============================================");
       console.log("📦 API RESPONSE:", response);
       console.log("📦 Success:", response.success);
@@ -119,14 +124,19 @@ export default function PendingTutorsPage() {
     console.log("🔴 PENDING PAGE - REJECT CLICKED - VERSION 2.0");
     console.log("🔴 ============================================");
     console.log("🔴 Timestamp:", new Date().toISOString());
-    
+
     if (!selectedTutor || !rejectionReason.trim()) {
       console.log("⚠️ No tutor selected or reason missing");
       alert("Please provide a rejection reason");
       return;
     }
 
-    console.log("📝 Selected tutor:", selectedTutor.id, selectedTutor.user?.firstName, selectedTutor.user?.lastName);
+    console.log(
+      "📝 Selected tutor:",
+      selectedTutor.id,
+      selectedTutor.user?.firstName,
+      selectedTutor.user?.lastName,
+    );
     console.log("📝 Rejection reason:", rejectionReason);
     setActionLoading(true);
     try {
@@ -135,7 +145,7 @@ export default function PendingTutorsPage() {
         selectedTutor.id,
         rejectionReason,
       );
-      
+
       console.log("📦 ============================================");
       console.log("📦 API RESPONSE:", response);
       console.log("📦 Success:", response.success);
@@ -333,19 +343,19 @@ export default function PendingTutorsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => router.push(`/tutors/${tutor.id}`)}
-                        className="text-primary-600 hover:text-primary-900 mr-4"
+                        className="text-primary-600 hover:text-primary-900 mr-4 cursor-pointer"
                       >
                         View Details
                       </button>
                       <button
                         onClick={() => openApproveModal(tutor)}
-                        className="text-green-600 hover:text-green-900 mr-2"
+                        className="text-green-600 hover:text-green-900 mr-2 cursor-pointer"
                       >
                         Approve
                       </button>
                       <button
                         onClick={() => openRejectModal(tutor)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 cursor-pointer"
                       >
                         Reject
                       </button>
@@ -456,7 +466,7 @@ export default function PendingTutorsPage() {
                   type="button"
                   onClick={handleApprove}
                   disabled={actionLoading}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {actionLoading ? "Processing..." : "Approve"}
                 </button>
@@ -467,7 +477,7 @@ export default function PendingTutorsPage() {
                     setSelectedTutor(null);
                   }}
                   disabled={actionLoading}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -529,7 +539,7 @@ export default function PendingTutorsPage() {
                   type="button"
                   onClick={handleReject}
                   disabled={actionLoading || !rejectionReason.trim()}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {actionLoading ? "Processing..." : "Reject Application"}
                 </button>
@@ -541,7 +551,7 @@ export default function PendingTutorsPage() {
                     setRejectionReason("");
                   }}
                   disabled={actionLoading}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>

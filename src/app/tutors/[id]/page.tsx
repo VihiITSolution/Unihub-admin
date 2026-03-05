@@ -196,7 +196,7 @@ export default function TutorDetailsPage() {
         <div>
           <button
             onClick={() => router.back()}
-            className="text-primary-600 hover:text-primary-900 mb-2 flex items-center"
+            className="text-primary-600 hover:text-primary-900 mb-2 flex items-center cursor-pointer"
           >
             <svg
               className="w-5 h-5 mr-1"
@@ -221,13 +221,13 @@ export default function TutorDetailsPage() {
           <div className="flex gap-3">
             <button
               onClick={() => setShowApproveModal(true)}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
             >
               Approve Application
             </button>
             <button
               onClick={() => setShowRejectModal(true)}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
             >
               Reject Application
             </button>
@@ -634,7 +634,7 @@ export default function TutorDetailsPage() {
                   type="button"
                   onClick={handleApprove}
                   disabled={actionLoading}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {actionLoading ? "Processing..." : "Approve"}
                 </button>
@@ -642,7 +642,7 @@ export default function TutorDetailsPage() {
                   type="button"
                   onClick={() => setShowApproveModal(false)}
                   disabled={actionLoading}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -699,7 +699,7 @@ export default function TutorDetailsPage() {
                   type="button"
                   onClick={handleReject}
                   disabled={actionLoading || !rejectionReason.trim()}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {actionLoading ? "Processing..." : "Reject Application"}
                 </button>
@@ -710,7 +710,7 @@ export default function TutorDetailsPage() {
                     setRejectionReason("");
                   }}
                   disabled={actionLoading}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   Cancel
                 </button>
