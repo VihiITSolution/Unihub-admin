@@ -4,7 +4,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
-// Base API URL - change this in production
+// Base API URL - used as fallback for local development
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
@@ -21,10 +21,16 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 30000,
 });
 
-// Request interceptor - add auth token
+// Request interceptor - add auth token + fix API URL for production
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== "undefined") {
+      // In production, use Next.js server-side proxy to avoid CORS and baked-in URLs.
+      // Browser calls /admin/api-proxy/... → Next.js server → backend container.
+      if (process.env.NODE_ENV === "production") {
+        config.baseURL = `${window.location.origin}/admin/api-proxy`;
+      }
+
       const token = localStorage.getItem(TOKEN_KEY);
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
