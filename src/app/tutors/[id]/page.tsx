@@ -17,6 +17,16 @@ export default function TutorDetailsPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Log component version on mount
+  useEffect(() => {
+    console.log("🎯 ===============================================");
+    console.log("🎯 TUTOR DETAILS PAGE LOADED - VERSION 2.0");
+    console.log("🎯 ===============================================");
+    console.log("🎯 Loaded at:", new Date().toISOString());
+    console.log("🎯 Tutor ID:", tutorId);
+    console.log("🎯 Features: Approve with notification, no redirect");
+  }, []);
+
   useEffect(() => {
     if (tutorId) {
       fetchTutorDetails();
@@ -42,27 +52,54 @@ export default function TutorDetailsPage() {
   };
 
   const handleApprove = async () => {
-    if (!tutor) return;
+    console.log("🚀 ============================================");
+    console.log("🚀 APPROVE BUTTON CLICKED - NEW CODE VERSION 2.0");
+    console.log("🚀 ============================================");
+    console.log("🚀 Timestamp:", new Date().toISOString());
+
+    if (!tutor) {
+      console.log("❌ No tutor data available");
+      return;
+    }
 
     setActionLoading(true);
     try {
-      console.log("Approving tutor application:", tutor.id);
+      console.log("📝 Approving tutor application:", tutor.id);
+      console.log(
+        "📝 Tutor name:",
+        tutor.user?.firstName,
+        tutor.user?.lastName,
+      );
       const response = await adminService.approveTutorApplication(tutor.id);
-      console.log("Approve response:", response);
+      console.log("📦 ============================================");
+      console.log("📦 API RESPONSE RECEIVED:", response);
+      console.log("📦 Success:", response.success);
+      console.log("📦 Message:", response.message);
+      console.log("📦 ============================================");
 
       if (response.success) {
+        console.log("✅ ============================================");
+        console.log("✅ APPROVAL SUCCESSFUL!");
+        console.log("✅ Action: Refreshing tutor details (NO REDIRECT)");
+        console.log("✅ ============================================");
         alert(
           "✅ Tutor application approved successfully! Notification sent to the user.",
         );
         setShowApproveModal(false);
         // Refresh the page to show updated status instead of redirecting
         await fetchTutorDetails();
+        console.log("✅ Page refreshed successfully!");
       } else {
-        console.error("Approve failed:", response.message);
+        console.error("❌ ============================================");
+        console.error("❌ APPROVAL FAILED:", response.message);
+        console.error("❌ ============================================");
         alert(`❌ Failed to approve: ${response.message || "Unknown error"}`);
       }
     } catch (err: any) {
-      console.error("Approve error:", err);
+      console.error("🛑 ============================================");
+      console.error("🛑 APPROVAL ERROR:", err);
+      console.error("🛑 Error message:", err?.message);
+      console.error("🛑 ============================================");
       alert(
         `❌ Error: ${err?.message || "An error occurred while approving the application"}`,
       );
@@ -72,37 +109,58 @@ export default function TutorDetailsPage() {
   };
 
   const handleReject = async () => {
+    console.log("🔴 ============================================");
+    console.log("🔴 REJECT BUTTON CLICKED - NEW CODE VERSION 2.0");
+    console.log("🔴 ============================================");
+    console.log("🔴 Timestamp:", new Date().toISOString());
+
     if (!tutor || !rejectionReason.trim()) {
+      console.log("⚠️ Rejection reason missing");
       alert("⚠️ Please provide a rejection reason");
       return;
     }
 
     setActionLoading(true);
     try {
+      console.log("📝 Rejecting tutor application:", tutor.id);
       console.log(
-        "Rejecting tutor application:",
-        tutor.id,
-        "Reason:",
-        rejectionReason,
+        "📝 Tutor name:",
+        tutor.user?.firstName,
+        tutor.user?.lastName,
       );
+      console.log("📝 Rejection reason:", rejectionReason);
       const response = await adminService.rejectTutorApplication(
         tutor.id,
         rejectionReason,
       );
-      console.log("Reject response:", response);
+      console.log("📦 ============================================");
+      console.log("📦 API RESPONSE RECEIVED:", response);
+      console.log("📦 Success:", response.success);
+      console.log("📦 Message:", response.message);
+      console.log("📦 ============================================");
 
       if (response.success) {
+        console.log("✅ ============================================");
+        console.log("✅ REJECTION SUCCESSFUL!");
+        console.log("✅ Action: Refreshing tutor details (NO REDIRECT)");
+        console.log("✅ ============================================");
         alert("✅ Tutor application rejected. Notification sent to the user.");
         setShowRejectModal(false);
         setRejectionReason("");
         // Refresh the page to show updated status instead of redirecting
         await fetchTutorDetails();
+        console.log("✅ Page refreshed successfully!");
       } else {
-        console.error("Reject failed:", response.message);
+        console.error("❌ ============================================");
+        console.error("❌ REJECTION FAILED:", response.message);
+        console.error("❌ ============================================");
         alert(`❌ Failed to reject: ${response.message || "Unknown error"}`);
       }
     } catch (err: any) {
-      console.error("Reject error:", err);
+      console.error("🛑 ============================================");
+      console.error("🛑 REJECTION ERROR:", err);
+      console.error("🛑 Error message:", err?.message);
+      console.error("🛑 ============================================");
       alert(
         `❌ Error: ${err?.message || "An error occurred while rejecting the application"}`,
       );
