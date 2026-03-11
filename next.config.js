@@ -5,7 +5,7 @@ const nextConfig = {
   // Proxy /api-proxy/* to the backend server at runtime (server-side only)
   // This avoids CORS and baked-in API URLs in browser JS
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:3000";
     return [
       {
         source: "/api-proxy/:path*",
