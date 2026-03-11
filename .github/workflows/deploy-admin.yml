@@ -51,6 +51,6 @@ jobs:
               --network unihub-network \
               --restart unless-stopped \
               -e NODE_ENV=production \
-              -e BACKEND_URL=http://unihub-backend:5000 \
+              -e BACKEND_URL=http://unihub-backend:3000 \
               ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
             docker image prune -f
