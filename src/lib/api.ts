@@ -49,6 +49,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
+      const requestUrl = error.config?.url || "";
+      const isAuthLoginRequest = requestUrl.includes("/auth/login");
+
+      if (isAuthLoginRequest) {
+        return Promise.reject(error);
+      }
+
       // Unauthorized - clear tokens and redirect to login
       if (typeof window !== "undefined") {
         localStorage.removeItem(TOKEN_KEY);
