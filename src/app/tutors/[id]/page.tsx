@@ -18,6 +18,11 @@ export default function TutorDetailsPage() {
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<{
+    type: "approve" | "reject";
+    tutorName: string;
+    tutorEmail: string;
+  } | null>(null);
 
   // Log component version on mount
   useEffect(() => {
@@ -95,12 +100,11 @@ export default function TutorDetailsPage() {
       console.log("📦 [APPROVE] Response:", response);
 
       if (response.success) {
-        alert(
-          `✅ Application Approved Successfully!\n\n` +
-            `🎉 ${tutor.user?.firstName} ${tutor.user?.lastName} is now a Tutor\n` +
-            `📧 Notification sent to: ${tutor.user?.email || "User email"}\n\n` +
-            `The applicant can now start creating courses.`,
-        );
+        setSuccessMessage({
+          type: "approve",
+          tutorName: `${tutor.user?.firstName} ${tutor.user?.lastName}`,
+          tutorEmail: tutor.user?.email || "User email",
+        });
         setShowApproveConfirm(false);
         setShowApproveModal(false);
 
@@ -108,7 +112,7 @@ export default function TutorDetailsPage() {
         setTimeout(() => {
           console.log("✅ [APPROVE] Refreshing data...");
           fetchTutorDetails();
-        }, 500);
+        }, 1500);
       } else {
         alert(`❌ Approval failed: ${response.message}`);
       }
@@ -156,18 +160,19 @@ export default function TutorDetailsPage() {
         console.log("✅ Notification sent to user email");
         console.log("✅ ============================================");
 
-        // Show professional success message
-        alert(
-          `✅ Application Rejected Successfully!\n\n` +
-            `📧 Notification Email Sent\n` +
-            `Recipient: ${tutor.user?.email || "User email"}\n\n` +
-            `The applicant has been notified via email about the rejection.`,
-        );
+        setSuccessMessage({
+          type: "reject",
+          tutorName: `${tutor.user?.firstName} ${tutor.user?.lastName}`,
+          tutorEmail: tutor.user?.email || "User email",
+        });
         setShowRejectConfirm(false);
         setShowRejectModal(false);
         setRejectionReason("");
-        await fetchTutorDetails();
-        console.log("✅ Page refreshed successfully!");
+
+        setTimeout(() => {
+          fetchTutorDetails();
+          console.log("✅ Page refreshed successfully!");
+        }, 1500);
       } else {
         console.error("❌ ============================================");
         console.error("❌ REJECTION FAILED:", response.message);
@@ -1009,6 +1014,254 @@ export default function TutorDetailsPage() {
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message Popup */}
+      {successMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div
+            className={`bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all animate-in ${
+              successMessage.type === "approve"
+                ? "border-t-4 border-green-500"
+                : "border-t-4 border-red-500"
+            }`}
+          >
+            {/* Header */}
+            <div
+              className={`px-6 py-4 ${
+                successMessage.type === "approve"
+                  ? "bg-gradient-to-r from-green-50 to-emerald-50"
+                  : "bg-gradient-to-r from-red-50 to-rose-50"
+              }`}
+            >
+              <div className="flex items-start">
+                {successMessage.type === "approve" ? (
+                  <svg
+                    className="w-8 h-8 text-green-600 mr-3 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-8 h-8 text-red-600 mr-3 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                )}
+                <div>
+                  <h2
+                    className={`text-xl font-bold ${
+                      successMessage.type === "approve"
+                        ? "text-green-900"
+                        : "text-red-900"
+                    }`}
+                  >
+                    {successMessage.type === "approve"
+                      ? "✅ Application Approved!"
+                      : "❌ Application Rejected!"}
+                  </h2>
+                  <p
+                    className={`text-sm ${
+                      successMessage.type === "approve"
+                        ? "text-green-700"
+                        : "text-red-700"
+                    }`}
+                  >
+                    {successMessage.type === "approve"
+                      ? "Tutor account activated successfully"
+                      : "Rejection notification sent"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6 space-y-4">
+              {successMessage.type === "approve" ? (
+                <>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Tutor Name
+                      </p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {successMessage.tutorName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Email Address
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {successMessage.tutorEmail}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 rounded-lg p-4 space-y-2">
+                    <p className="text-sm font-semibold text-green-900">
+                      Actions Completed:
+                    </p>
+                    <ul className="space-y-1 text-sm text-green-800">
+                      <li className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-green-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Tutor account enabled
+                      </li>
+                      <li className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-green-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Approval notification sent
+                      </li>
+                      <li className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-green-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Ready to create courses
+                      </li>
+                    </ul>
+                  </div>
+
+                  <p className="text-sm text-gray-600 text-center pt-2">
+                    The applicant will receive approval notification at{" "}
+                    {successMessage.tutorEmail}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Tutor Name
+                      </p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {successMessage.tutorName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Email Address
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {successMessage.tutorEmail}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-50 rounded-lg p-4 space-y-2">
+                    <p className="text-sm font-semibold text-red-900">
+                      Actions Completed:
+                    </p>
+                    <ul className="space-y-1 text-sm text-red-800">
+                      <li className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-red-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Application rejected
+                      </li>
+                      <li className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-red-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Rejection email sent
+                      </li>
+                      <li className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-2 text-red-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        User can reapply later
+                      </li>
+                    </ul>
+                  </div>
+
+                  <p className="text-sm text-gray-600 text-center pt-2">
+                    Rejection details sent to {successMessage.tutorEmail}
+                  </p>
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-lg">
+              <button
+                onClick={() => setSuccessMessage(null)}
+                className={`w-full py-2 rounded-lg font-semibold transition text-white ${
+                  successMessage.type === "approve"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>
