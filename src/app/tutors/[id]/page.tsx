@@ -67,61 +67,37 @@ export default function TutorDetailsPage() {
   };
 
   const handleApprove = async () => {
-    console.log("🚀 ============================================");
-    console.log("🚀 APPROVE BUTTON CLICKED - NEW CODE VERSION 2.0");
-    console.log("🚀 ============================================");
-    console.log("🚀 Timestamp:", new Date().toISOString());
+    console.log("🚀 [APPROVE] BUTTON CLICKED");
+    console.log("🚀 [APPROVE] Tutor ID:", tutor?.id);
 
     if (!tutor) {
-      console.log("❌ No tutor data available");
+      alert("❌ No tutor data");
       return;
     }
 
     setActionLoading(true);
     try {
-      console.log("📝 Approving tutor application:", tutor.id);
-      console.log(
-        "📝 Tutor name:",
-        tutor.user?.firstName,
-        tutor.user?.lastName,
-      );
+      console.log("🚀 [APPROVE] Calling API endpoint...");
       const response = await adminService.approveTutorApplication(tutor.id);
-      console.log("📦 ============================================");
-      console.log("📦 API RESPONSE RECEIVED:", response);
-      console.log("📦 Success:", response.success);
-      console.log("📦 Message:", response.message);
-      console.log("📦 ============================================");
+
+      console.log("📦 [APPROVE] API Response received");
+      console.log("📦 [APPROVE] Response:", response);
 
       if (response.success) {
-        console.log("✅ ============================================");
-        console.log("✅ APPROVAL SUCCESSFUL!");
-        console.log("✅ Action: Refreshing tutor details (NO REDIRECT)");
-        console.log("✅ ============================================");
-        alert(
-          "✅ Tutor application approved successfully! Notification sent to the user.",
-        );
+        alert("✅ Tutor Approved Successfully!");
         setShowApproveModal(false);
 
-        // Refresh the page to show updated status instead of redirecting
-        console.log("📥 [Approve] Starting fetch for updated data...");
-        await fetchTutorDetails();
-        console.log("✅ [Approve] Page refreshed successfully!");
+        // Wait a moment then refresh
+        setTimeout(() => {
+          console.log("✅ [APPROVE] Refreshing data...");
+          fetchTutorDetails();
+        }, 500);
       } else {
-        console.error("❌ ============================================");
-        console.error("❌ APPROVAL FAILED:", response.message);
-        console.error("❌ ============================================");
-        alert(`❌ Failed to approve: ${response.message || "Unknown error"}`);
+        alert(`❌ Approval failed: ${response.message}`);
       }
     } catch (err: any) {
-      console.error("🛑 ============================================");
-      console.error("🛑 APPROVAL ERROR:", err);
-      console.error("🛑 Error message:", err?.message);
-      console.error("🛑 Full error:", err);
-      console.error("🛑 ============================================");
-      alert(
-        `❌ Error: ${err?.message || "An error occurred while approving the application"}`,
-      );
-    } finally {
+      console.error("🛑 [APPROVE] ERROR:", err);
+      alert(`❌ Error: ${err?.message || "Something went wrong"}`);
       setActionLoading(false);
     }
   };

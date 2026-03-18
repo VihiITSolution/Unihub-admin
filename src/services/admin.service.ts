@@ -532,49 +532,21 @@ export const adminService = {
     tutorProfileId: number,
   ): Promise<ApiResponse<TutorProfile>> {
     try {
-      console.log("🚀 ========================================");
-      console.log(`🚀 [Frontend Service] Approve Tutor ${tutorProfileId}`);
-      console.log("🚀 ========================================");
-      console.log("🚀 Timestamp:", new Date().toISOString());
       console.log(
-        "🚀 Making PUT request to:",
+        "[APPROVE] Making PUT request to:",
         `/admin/tutor-profiles/${tutorProfileId}/approve`,
       );
-
-      const token = localStorage.getItem("admin_token");
-      console.log("🚀 Token available:", !!token);
 
       const response = await apiClient.put<ApiResponse<TutorProfile>>(
         `/admin/tutor-profiles/${tutorProfileId}/approve`,
       );
 
-      console.log("📦 ========================================");
-      console.log("📦 API RESPONSE RECEIVED");
-      console.log("📦 ========================================");
-      console.log("📦 Status Code:", response.status);
-      console.log("📦 Response Data:", response.data);
-      console.log("📦 Success:", response.data?.success);
-      console.log("📦 Message:", response.data?.message);
-      console.log("📦 ========================================");
+      console.log("[APPROVE] Response status:", response.status);
+      console.log("[APPROVE] Response success:", response.data?.success);
 
       return response.data;
     } catch (error: any) {
-      console.error("🛑 ========================================");
-      console.error("🛑 [Frontend Service] Approve Error");
-      console.error("🛑 ========================================");
-      console.error("🛑 Error Status:", error.response?.status);
-      console.error("🛑 Error Message:", error.message);
-      console.error("🛑 Error Response:", error.response?.data);
-      console.error("🛑 Full Error:", error);
-      console.error("🛑 ========================================");
-
-      return {
-        success: false,
-        message:
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to approve tutor application",
-      };
+      console.error("[APPROVE] Error:", error.message, error.response?.data);
     }
   },
 
