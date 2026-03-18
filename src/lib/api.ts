@@ -3,6 +3,7 @@ import axios, {
   AxiosError,
   InternalAxiosRequestConfig,
 } from "axios";
+import { toAdminPath } from "@/lib/routing";
 
 // Base API URL - used as fallback for local development
 const API_BASE_URL =
@@ -52,7 +53,7 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
-        window.location.href = "/login";
+        window.location.href = toAdminPath("/login");
       }
     }
     return Promise.reject(error);
