@@ -34,18 +34,33 @@ export default function TutorDetailsPage() {
   }, [tutorId]);
 
   const fetchTutorDetails = async () => {
+    console.log("📥 ============================================");
+    console.log("📥 [Component] Fetching tutor details for ID:", tutorId);
+    console.log("📥 ============================================");
     setLoading(true);
     setError("");
     try {
       const response = await adminService.getTutorProfile(parseInt(tutorId));
 
+      console.log("📥 [Component] getTutorProfile response:", response);
+      console.log("📥 [Component] Response success:", response.success);
+      console.log("📥 [Component] Response data:", response.data);
+
       if (response.success && response.data) {
+        console.log("✅ [Component] Setting tutor data successfully");
         setTutor(response.data);
+        setError("");
       } else {
-        setError(response.message || "Failed to fetch tutor details");
+        const errorMsg = response.message || "Failed to fetch tutor details";
+        console.error("❌ [Component] API returned error:", errorMsg);
+        setError(errorMsg);
+        setTutor(null);
       }
-    } catch (err) {
-      setError("An error occurred while fetching tutor details");
+    } catch (err: any) {
+      const errorMsg = `Error: ${err?.message || "An error occurred while fetching tutor details"}`;
+      console.error("🛑 [Component] Fetch error:", err);
+      setError(errorMsg);
+      setTutor(null);
     } finally {
       setLoading(false);
     }
@@ -86,9 +101,11 @@ export default function TutorDetailsPage() {
           "✅ Tutor application approved successfully! Notification sent to the user.",
         );
         setShowApproveModal(false);
+
         // Refresh the page to show updated status instead of redirecting
+        console.log("📥 [Approve] Starting fetch for updated data...");
         await fetchTutorDetails();
-        console.log("✅ Page refreshed successfully!");
+        console.log("✅ [Approve] Page refreshed successfully!");
       } else {
         console.error("❌ ============================================");
         console.error("❌ APPROVAL FAILED:", response.message);
@@ -99,6 +116,7 @@ export default function TutorDetailsPage() {
       console.error("🛑 ============================================");
       console.error("🛑 APPROVAL ERROR:", err);
       console.error("🛑 Error message:", err?.message);
+      console.error("🛑 Full error:", err);
       console.error("🛑 ============================================");
       alert(
         `❌ Error: ${err?.message || "An error occurred while approving the application"}`,
@@ -179,9 +197,42 @@ export default function TutorDetailsPage() {
 
   if (error || !tutor) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4">
-          {error || "Tutor not found"}
+      <div className="p-6 min-h-screen">
+        <button
+          onClick={() => router.back()}
+          className="text-primary-600 hover:text-primary-900 mb-4 flex items-center cursor-pointer"
+        >
+          <svg
+            className="w-5 h-5 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back
+        </button>
+        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-6 rounded-r-lg max-w-2xl">
+          <h2 className="font-bold text-lg mb-2">
+            Error Loading Tutor Details
+          </h2>
+          <p className="text-red-800">{error || "Tutor not found"}</p>
+          <details className="mt-4 text-sm text-red-700">
+            <summary className="cursor-pointer font-semibold">
+              Debug Info
+            </summary>
+            <div className="mt-2 p-3 bg-red-100 rounded text-xs font-mono">
+              <div>Tutor ID: {tutorId}</div>
+              <div>Error: {error}</div>
+              <div>Tutor Data: {tutor ? "exists" : "null"}</div>
+              <div>Check browser console for more details</div>
+            </div>
+          </details>
         </div>
       </div>
     );

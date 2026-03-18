@@ -491,15 +491,36 @@ export const adminService = {
    */
   async getTutorProfile(id: number): Promise<ApiResponse<TutorProfile>> {
     try {
+      console.log("📥 ========================================");
+      console.log(`📥 [Service] Fetching tutor profile ID: ${id}`);
+      console.log("📥 URL: /admin/tutor-profiles/" + id);
+
       const response = await apiClient.get<ApiResponse<TutorProfile>>(
         `/admin/tutor-profiles/${id}`,
       );
+
+      console.log("📥 ========================================");
+      console.log("📥 Response status:", response.status);
+      console.log("📥 Response data:", response.data);
+      console.log("📥 Success:", response.data?.success);
+      console.log("📥 Has data:", !!response.data?.data);
+      console.log("📥 ========================================");
+
       return response.data;
     } catch (error: any) {
+      console.error("🛑 ========================================");
+      console.error("🛑 [Service] getTutorProfile error");
+      console.error("🛑 Error status:", error.response?.status);
+      console.error("🛑 Error message:", error.message);
+      console.error("🛑 Error response:", error.response?.data);
+      console.error("🛑 ========================================");
+
       return {
         success: false,
         message:
-          error.response?.data?.message || "Failed to fetch tutor profile",
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch tutor profile",
       };
     }
   },
