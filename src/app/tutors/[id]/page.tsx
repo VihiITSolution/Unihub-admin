@@ -66,6 +66,38 @@ export default function TutorDetailsPage() {
     }
   };
 
+  const handleQuickApprove = async () => {
+    console.log("⚡ QUICK APPROVE CLICKED");
+    if (!tutor) {
+      alert("❌ No tutor data");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to approve ${tutor.user?.firstName} ${tutor.user?.lastName}?`,
+      )
+    ) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      console.log("⚡ Calling approve API...");
+      const response = await adminService.approveTutorApplication(tutor.id);
+      if (response.success) {
+        alert("✅ Approved!");
+        setTimeout(() => fetchTutorDetails(), 500);
+      } else {
+        alert(`❌ ${response.message}`);
+      }
+    } catch (err: any) {
+      alert(`❌ Error: ${err?.message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleApprove = async () => {
     console.log("🚀 [APPROVE] BUTTON CLICKED");
     console.log("🚀 [APPROVE] Tutor ID:", tutor?.id);
@@ -244,22 +276,22 @@ export default function TutorDetailsPage() {
             Tutor Application Details
           </h1>
         </div>
-        {isPending && (
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowApproveModal(true)}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer"
-            >
-              Approve Application
-            </button>
-            <button
-              onClick={() => setShowRejectModal(true)}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
-            >
-              Reject Application
-            </button>
-          </div>
-        )}
+        <div className="flex gap-3">
+          <button
+            onClick={handleQuickApprove}
+            disabled={actionLoading}
+            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg"
+          >
+            {actionLoading ? "Processing..." : "✅ APPROVE NOW"}
+          </button>
+          <button
+            onClick={() => setShowRejectModal(true)}
+            disabled={actionLoading}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+          >
+            {actionLoading ? "Processing..." : "❌ Reject Application"}
+          </button>
+        </div>
       </div>
 
       {/* Status Badge */}
