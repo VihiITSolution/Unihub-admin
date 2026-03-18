@@ -13,7 +13,9 @@ export default function TutorDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -72,7 +74,7 @@ export default function TutorDetailsPage() {
       alert("❌ No tutor data");
       return;
     }
-    setShowApproveModal(true);
+    setShowApproveConfirm(true);
   };
 
   const handleApprove = async () => {
@@ -99,6 +101,7 @@ export default function TutorDetailsPage() {
             `📧 Notification sent to: ${tutor.user?.email || "User email"}\n\n` +
             `The applicant can now start creating courses.`,
         );
+        setShowApproveConfirm(false);
         setShowApproveModal(false);
 
         // Wait a moment then refresh
@@ -160,6 +163,7 @@ export default function TutorDetailsPage() {
             `Recipient: ${tutor.user?.email || "User email"}\n\n` +
             `The applicant has been notified via email about the rejection.`,
         );
+        setShowRejectConfirm(false);
         setShowRejectModal(false);
         setRejectionReason("");
         await fetchTutorDetails();
@@ -273,7 +277,7 @@ export default function TutorDetailsPage() {
             {actionLoading ? "Processing..." : "✅ APPROVE NOW"}
           </button>
           <button
-            onClick={() => setShowRejectModal(true)}
+            onClick={() => setShowRejectConfirm(true)}
             disabled={actionLoading}
             className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
           >
@@ -638,6 +642,249 @@ export default function TutorDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* Approve Confirmation Popup */}
+      {showApproveConfirm && tutor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 rounded-t-lg">
+              <div className="flex items-center">
+                <svg
+                  className="w-8 h-8 text-white mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h2 className="text-xl font-bold text-white">
+                  Confirm Approval
+                </h2>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6">
+              <p className="text-gray-700 text-center mb-2">
+                Are you sure you want to approve this tutor application?
+              </p>
+              <div className="bg-green-50 rounded-lg p-4 mb-4">
+                <p className="text-sm text-gray-600">
+                  <strong className="block text-green-900 mb-1">
+                    Tutor Name:
+                  </strong>
+                  {tutor.user?.firstName} {tutor.user?.lastName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong className="block text-green-900 mb-1">Email:</strong>
+                  {tutor.user?.email}
+                </p>
+                <p className="text-sm text-gray-600 mt-3">
+                  <strong className="block text-green-900 mb-1">
+                    Actions:
+                  </strong>
+                  ✅ Enable tutor account
+                  <br />
+                  ✅ Send approval notification
+                  <br />✅ Allow course creation
+                </p>
+              </div>
+              <p className="text-sm text-gray-500 text-center">
+                This action cannot be undone yet. You can reject later if
+                needed.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-lg flex gap-3 justify-end">
+              <button
+                onClick={() => setShowApproveConfirm(false)}
+                disabled={actionLoading}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center"
+              >
+                {actionLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Approve
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Confirmation Popup */}
+      {showRejectConfirm && tutor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-lg">
+              <div className="flex items-center">
+                <svg
+                  className="w-8 h-8 text-white mr-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h2 className="text-xl font-bold text-white">
+                  Confirm Rejection
+                </h2>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6">
+              <p className="text-gray-700 text-center mb-4">
+                Please provide a reason for rejecting this application:
+              </p>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                placeholder="Enter rejection reason (e.g., Insufficient experience, Poor portfolio, etc.)"
+                className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              />
+              <div className="bg-red-50 rounded-lg p-4 mt-4">
+                <p className="text-sm text-gray-600">
+                  <strong className="block text-red-900 mb-1">
+                    Tutor Name:
+                  </strong>
+                  {tutor.user?.firstName} {tutor.user?.lastName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong className="block text-red-900 mb-1">Email:</strong>
+                  {tutor.user?.email}
+                </p>
+                <p className="text-sm text-gray-600 mt-3">
+                  <strong className="block text-red-900 mb-1">Actions:</strong>
+                  ❌ Reject application
+                  <br />
+                  📧 Send rejection email
+                  <br />
+                  🔄 User can reapply
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-4 rounded-b-lg flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowRejectConfirm(false);
+                  setRejectionReason("");
+                }}
+                disabled={actionLoading}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={actionLoading || !rejectionReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center"
+              >
+                {actionLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    Reject
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Approve Modal */}
       {showApproveModal && (
