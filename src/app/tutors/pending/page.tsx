@@ -343,21 +343,9 @@ export default function PendingTutorsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => router.push(`/tutors/${tutor.id}`)}
-                        className="text-primary-600 hover:text-primary-900 mr-4 cursor-pointer"
+                        className="text-primary-600 hover:text-primary-900 cursor-pointer font-semibold"
                       >
-                        View Details
-                      </button>
-                      <button
-                        onClick={() => openApproveModal(tutor)}
-                        className="text-green-600 hover:text-green-900 mr-2 cursor-pointer"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => openRejectModal(tutor)}
-                        className="text-red-600 hover:text-red-900 cursor-pointer"
-                      >
-                        Reject
+                        View Details →
                       </button>
                     </td>
                   </tr>

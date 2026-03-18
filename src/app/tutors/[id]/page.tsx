@@ -67,35 +67,12 @@ export default function TutorDetailsPage() {
   };
 
   const handleQuickApprove = async () => {
-    console.log("⚡ QUICK APPROVE CLICKED");
+    console.log("⚡ APPROVE CLICKED");
     if (!tutor) {
       alert("❌ No tutor data");
       return;
     }
-
-    if (
-      !window.confirm(
-        `Are you sure you want to approve ${tutor.user?.firstName} ${tutor.user?.lastName}?`,
-      )
-    ) {
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      console.log("⚡ Calling approve API...");
-      const response = await adminService.approveTutorApplication(tutor.id);
-      if (response.success) {
-        alert("✅ Approved!");
-        setTimeout(() => fetchTutorDetails(), 500);
-      } else {
-        alert(`❌ ${response.message}`);
-      }
-    } catch (err: any) {
-      alert(`❌ Error: ${err?.message}`);
-    } finally {
-      setActionLoading(false);
-    }
+    setShowApproveModal(true);
   };
 
   const handleApprove = async () => {
@@ -116,7 +93,12 @@ export default function TutorDetailsPage() {
       console.log("📦 [APPROVE] Response:", response);
 
       if (response.success) {
-        alert("✅ Tutor Approved Successfully!");
+        alert(
+          `✅ Application Approved Successfully!\n\n` +
+            `🎉 ${tutor.user?.firstName} ${tutor.user?.lastName} is now a Tutor\n` +
+            `📧 Notification sent to: ${tutor.user?.email || "User email"}\n\n` +
+            `The applicant can now start creating courses.`,
+        );
         setShowApproveModal(false);
 
         // Wait a moment then refresh
@@ -168,12 +150,18 @@ export default function TutorDetailsPage() {
       if (response.success) {
         console.log("✅ ============================================");
         console.log("✅ REJECTION SUCCESSFUL!");
-        console.log("✅ Action: Refreshing tutor details (NO REDIRECT)");
+        console.log("✅ Notification sent to user email");
         console.log("✅ ============================================");
-        alert("✅ Tutor application rejected. Notification sent to the user.");
+
+        // Show professional success message
+        alert(
+          `✅ Application Rejected Successfully!\n\n` +
+            `📧 Notification Email Sent\n` +
+            `Recipient: ${tutor.user?.email || "User email"}\n\n` +
+            `The applicant has been notified via email about the rejection.`,
+        );
         setShowRejectModal(false);
         setRejectionReason("");
-        // Refresh the page to show updated status instead of redirecting
         await fetchTutorDetails();
         console.log("✅ Page refreshed successfully!");
       } else {
