@@ -547,6 +547,13 @@ export const adminService = {
       return response.data;
     } catch (error: any) {
       console.error("[APPROVE] Error:", error.message, error.response?.data);
+      return {
+        success: false,
+        message:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to approve tutor application",
+      };
     }
   },
 
