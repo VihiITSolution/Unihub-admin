@@ -514,9 +514,8 @@ export const adminService = {
       console.log(
         `[Admin Service] Approving tutor application ID: ${tutorProfileId}`,
       );
-      const response = await apiClient.post<ApiResponse<TutorProfile>>(
-        `/profile/tutor/applications/${tutorProfileId}/review`,
-        { action: "approve" },
+      const response = await apiClient.put<ApiResponse<TutorProfile>>(
+        `/admin/tutor-profiles/${tutorProfileId}/approve`,
       );
       console.log("[Admin Service] Approve response:", response.data);
       return response.data;
@@ -546,9 +545,9 @@ export const adminService = {
       console.log(
         `[Admin Service] Rejecting tutor application ID: ${tutorProfileId}`,
       );
-      const response = await apiClient.post<ApiResponse<TutorProfile>>(
-        `/profile/tutor/applications/${tutorProfileId}/review`,
-        { action: "reject", rejectionReason },
+      const response = await apiClient.put<ApiResponse<TutorProfile>>(
+        `/admin/tutor-profiles/${tutorProfileId}/reject`,
+        { reason: rejectionReason },
       );
       console.log("[Admin Service] Reject response:", response.data);
       return response.data;
