@@ -33,7 +33,8 @@ export default function BankTransfersPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<BankTransferPayment[]>([]);
-  const [selectedPayment, setSelectedPayment] = useState<BankTransferPayment | null>(null);
+  const [selectedPayment, setSelectedPayment] =
+    useState<BankTransferPayment | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -94,7 +95,10 @@ export default function BankTransfersPage() {
 
     try {
       setProcessing(true);
-      const response = await adminService.rejectBankTransfer(selectedPayment.id, rejectionReason);
+      const response = await adminService.rejectBankTransfer(
+        selectedPayment.id,
+        rejectionReason,
+      );
       if (response.success) {
         alert("Payment rejected successfully!");
         setShowModal(false);
@@ -125,8 +129,12 @@ export default function BankTransfersPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Bank Transfer Verification</h1>
-          <p className="text-gray-600">Review and verify pending bank transfer payments</p>
+          <h1 className="text-3xl font-bold mb-2">
+            Bank Transfer Verification
+          </h1>
+          <p className="text-gray-600">
+            Review and verify pending bank transfer payments
+          </p>
         </div>
         <Link
           href="/marketplace"
@@ -139,8 +147,12 @@ export default function BankTransfersPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-yellow-50 rounded-lg shadow-sm p-6 border border-yellow-200">
-          <div className="text-sm text-yellow-600 mb-1">Pending Verification</div>
-          <div className="text-2xl font-bold text-yellow-800">{payments.length}</div>
+          <div className="text-sm text-yellow-600 mb-1">
+            Pending Verification
+          </div>
+          <div className="text-2xl font-bold text-yellow-800">
+            {payments.length}
+          </div>
         </div>
         <div className="bg-blue-50 rounded-lg shadow-sm p-6 border border-blue-200">
           <div className="text-sm text-blue-600 mb-1">Total Amount</div>
@@ -168,7 +180,10 @@ export default function BankTransfersPage() {
       ) : (
         <div className="space-y-4">
           {payments.map((payment) => (
-            <div key={payment.id} className="bg-white rounded-lg shadow-sm p-6 border">
+            <div
+              key={payment.id}
+              className="bg-white rounded-lg shadow-sm p-6 border"
+            >
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Payment Info */}
                 <div className="flex-1">
@@ -185,7 +200,9 @@ export default function BankTransfersPage() {
                       <div className="text-2xl font-bold text-blue-600">
                         ${payment.amount.toFixed(2)}
                       </div>
-                      <div className="text-xs text-gray-500">{payment.currency}</div>
+                      <div className="text-xs text-gray-500">
+                        {payment.currency}
+                      </div>
                     </div>
                   </div>
 
@@ -202,24 +219,34 @@ export default function BankTransfersPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Item Price</div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        Item Price
+                      </div>
                       <div className="font-medium">
-                        ${payment.marketplaceItem?.price.toFixed(2)}
+                        {Number(payment.marketplaceItem?.price) === 0
+                          ? "FREE"
+                          : `$${payment.marketplaceItem?.price.toFixed(2)}`}
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Transaction Date</div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        Transaction Date
+                      </div>
                       <div className="text-sm">
                         {payment.transactionDate
-                          ? new Date(payment.transactionDate).toLocaleDateString()
+                          ? new Date(
+                              payment.transactionDate,
+                            ).toLocaleDateString()
                           : "Not provided"}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Reference</div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        Reference
+                      </div>
                       <div className="text-sm font-mono">
                         {payment.transactionReference || "N/A"}
                       </div>
@@ -236,14 +263,18 @@ export default function BankTransfersPage() {
 
                 {/* Proof Image */}
                 <div className="lg:w-80">
-                  <div className="text-xs text-gray-500 mb-2">Payment Proof</div>
+                  <div className="text-xs text-gray-500 mb-2">
+                    Payment Proof
+                  </div>
                   {payment.proofImage ? (
                     <div className="relative">
                       <img
                         src={payment.proofImage}
                         alt="Payment proof"
                         className="w-full h-48 object-cover rounded-lg border cursor-pointer hover:opacity-75 transition-opacity"
-                        onClick={() => setViewingProof(payment.proofImage || null)}
+                        onClick={() =>
+                          setViewingProof(payment.proofImage || null)
+                        }
                       />
                       <div className="text-xs text-center text-gray-500 mt-1">
                         Click to view full size
@@ -288,8 +319,8 @@ export default function BankTransfersPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Reject Payment</h3>
             <p className="text-gray-600 mb-4">
-              Rejecting payment for "{selectedPayment.marketplaceItem?.title}". Please provide a
-              reason:
+              Rejecting payment for "{selectedPayment.marketplaceItem?.title}".
+              Please provide a reason:
             </p>
             <textarea
               value={rejectionReason}

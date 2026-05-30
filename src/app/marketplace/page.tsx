@@ -12,8 +12,12 @@ export default function AdminMarketplacePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<MarketplaceItem[]>([]);
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
-  const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
+  const [filter, setFilter] = useState<
+    "all" | "pending" | "approved" | "rejected"
+  >("all");
+  const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(
+    null,
+  );
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -29,7 +33,10 @@ export default function AdminMarketplacePage() {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const response = await adminService.getMarketplaceItems({ page: 1, limit: 100 });
+      const response = await adminService.getMarketplaceItems({
+        page: 1,
+        limit: 100,
+      });
       if (response.success && response.data && response.data.items) {
         setItems(response.data.items);
       }
@@ -74,7 +81,10 @@ export default function AdminMarketplacePage() {
 
     try {
       setProcessing(true);
-      const response = await adminService.rejectMarketplaceItem(selectedItem.id, rejectionReason);
+      const response = await adminService.rejectMarketplaceItem(
+        selectedItem.id,
+        rejectionReason,
+      );
       if (response.success) {
         alert("Item rejected successfully!");
         setShowApprovalModal(false);
@@ -93,33 +103,56 @@ export default function AdminMarketplacePage() {
 
   const getStatusBadge = (item: MarketplaceItem) => {
     if (!item.requiresPayment) {
-      return <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">Free</span>;
+      return (
+        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+          Free
+        </span>
+      );
     }
 
     if (!item.isPaid) {
-      return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Unpaid</span>;
+      return (
+        <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+          Unpaid
+        </span>
+      );
     }
 
     switch (item.approvalStatus) {
-      case 'pending':
-        return <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Pending</span>;
-      case 'approved':
-        return <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Approved</span>;
-      case 'rejected':
-        return <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">Rejected</span>;
+      case "pending":
+        return (
+          <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+            Pending
+          </span>
+        );
+      case "approved":
+        return (
+          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+            Approved
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+            Rejected
+          </span>
+        );
       default:
         return null;
     }
   };
 
-  const filteredItems = items.filter(item => {
-    if (filter === "pending") return item.isPaid && item.approvalStatus === 'pending';
-    if (filter === "approved") return item.approvalStatus === 'approved';
-    if (filter === "rejected") return item.approvalStatus === 'rejected';
+  const filteredItems = items.filter((item) => {
+    if (filter === "pending")
+      return item.isPaid && item.approvalStatus === "pending";
+    if (filter === "approved") return item.approvalStatus === "approved";
+    if (filter === "rejected") return item.approvalStatus === "rejected";
     return true;
   });
 
-  const pendingCount = items.filter(i => i.isPaid && i.approvalStatus === 'pending').length;
+  const pendingCount = items.filter(
+    (i) => i.isPaid && i.approvalStatus === "pending",
+  ).length;
 
   if (loading) {
     return (
@@ -154,18 +187,20 @@ export default function AdminMarketplacePage() {
         </div>
         <div className="bg-yellow-50 rounded-lg shadow-sm p-6 border border-yellow-200">
           <div className="text-sm text-yellow-600 mb-1">Pending Approval</div>
-          <div className="text-2xl font-bold text-yellow-800">{pendingCount}</div>
+          <div className="text-2xl font-bold text-yellow-800">
+            {pendingCount}
+          </div>
         </div>
         <div className="bg-green-50 rounded-lg shadow-sm p-6 border border-green-200">
           <div className="text-sm text-green-600 mb-1">Approved</div>
           <div className="text-2xl font-bold text-green-800">
-            {items.filter(i => i.approvalStatus === 'approved').length}
+            {items.filter((i) => i.approvalStatus === "approved").length}
           </div>
         </div>
         <div className="bg-red-50 rounded-lg shadow-sm p-6 border border-red-200">
           <div className="text-sm text-red-600 mb-1">Rejected</div>
           <div className="text-2xl font-bold text-red-800">
-            {items.filter(i => i.approvalStatus === 'rejected').length}
+            {items.filter((i) => i.approvalStatus === "rejected").length}
           </div>
         </div>
       </div>
@@ -200,7 +235,8 @@ export default function AdminMarketplacePage() {
               : "border-transparent text-gray-600 hover:text-gray-900"
           }`}
         >
-          Approved ({items.filter(i => i.approvalStatus === 'approved').length})
+          Approved (
+          {items.filter((i) => i.approvalStatus === "approved").length})
         </button>
         <button
           onClick={() => setFilter("rejected")}
@@ -210,7 +246,8 @@ export default function AdminMarketplacePage() {
               : "border-transparent text-gray-600 hover:text-gray-900"
           }`}
         >
-          Rejected ({items.filter(i => i.approvalStatus === 'rejected').length})
+          Rejected (
+          {items.filter((i) => i.approvalStatus === "rejected").length})
         </button>
       </div>
 
@@ -219,20 +256,36 @@ export default function AdminMarketplacePage() {
         <div className="bg-white rounded-lg shadow-sm p-12 text-center">
           <div className="text-6xl mb-4">📦</div>
           <h3 className="text-xl font-semibold mb-2">No items found</h3>
-          <p className="text-gray-600">No marketplace items match the current filter</p>
+          <p className="text-gray-600">
+            No marketplace items match the current filter
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Item</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Vendor</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Category</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Price</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Created</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Item
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Vendor
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Price
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Created
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -250,13 +303,17 @@ export default function AdminMarketplacePage() {
                         <div className="font-medium">
                           {item.seller.firstName} {item.seller.lastName}
                         </div>
-                        <div className="text-sm text-gray-600">{item.seller.email}</div>
+                        <div className="text-sm text-gray-600">
+                          {item.seller.email}
+                        </div>
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm">{item.category}</td>
                   <td className="px-6 py-4">
-                    <div className="font-semibold">${item.price}</div>
+                    <div className="font-semibold">
+                      {Number(item.price) === 0 ? "FREE" : `$${item.price}`}
+                    </div>
                     {item.requiresPayment && item.adFee && (
                       <div className="text-xs text-gray-500">
                         Fee: ${item.adFee}
@@ -268,7 +325,7 @@ export default function AdminMarketplacePage() {
                     {new Date(item.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
-                    {item.isPaid && item.approvalStatus === 'pending' && (
+                    {item.isPaid && item.approvalStatus === "pending" && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleApprove(item)}
@@ -286,11 +343,15 @@ export default function AdminMarketplacePage() {
                         </button>
                       </div>
                     )}
-                    {item.approvalStatus === 'rejected' && item.rejectionReason && (
-                      <div className="text-xs text-red-600" title={item.rejectionReason}>
-                        View reason
-                      </div>
-                    )}
+                    {item.approvalStatus === "rejected" &&
+                      item.rejectionReason && (
+                        <div
+                          className="text-xs text-red-600"
+                          title={item.rejectionReason}
+                        >
+                          View reason
+                        </div>
+                      )}
                   </td>
                 </tr>
               ))}
@@ -305,7 +366,8 @@ export default function AdminMarketplacePage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Reject Listing</h3>
             <p className="text-gray-600 mb-4">
-              You are about to reject "{selectedItem.title}". Please provide a reason:
+              You are about to reject "{selectedItem.title}". Please provide a
+              reason:
             </p>
             <textarea
               value={rejectionReason}

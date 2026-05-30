@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Card from '@/components/ui/Card';
-import Table from '@/components/ui/Table';
-import { adminService, Course } from '@/services/admin.service';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Card from "@/components/ui/Card";
+import Table from "@/components/ui/Table";
+import { adminService, Course } from "@/services/admin.service";
 
 export default function CoursesPage() {
   const router = useRouter();
@@ -13,8 +13,8 @@ export default function CoursesPage() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [publishedFilter, setPublishedFilter] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [publishedFilter, setPublishedFilter] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     loadCourses();
@@ -24,63 +24,73 @@ export default function CoursesPage() {
     try {
       setIsLoading(true);
       const response = await adminService.getCourses({
-        isPublished: publishedFilter === '' ? undefined : publishedFilter === 'true',
+        isPublished:
+          publishedFilter === "" ? undefined : publishedFilter === "true",
         page,
-        limit: 10
+        limit: 10,
       });
 
       if (response.success && response.data) {
         setCourses(response.data.courses || []);
         setTotalPages(response.data.pagination.totalPages);
       } else {
-        setError('Failed to load courses');
+        setError("Failed to load courses");
       }
     } catch (err) {
-      setError('Failed to load courses');
+      setError("Failed to load courses");
     } finally {
       setIsLoading(false);
     }
   };
 
   const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'title', label: 'Course Title' },
-    { 
-      key: 'tutor', 
-      label: 'Tutor',
-      render: (course: Course) => course.tutor 
-        ? `${course.tutor.firstName} ${course.tutor.lastName}` 
-        : 'N/A'
-    },
-    { 
-      key: 'price', 
-      label: 'Price',
-      render: (course: Course) => `$${Number(course.price).toFixed(2)}`
-    },
-    { 
-      key: 'status', 
-      label: 'Status',
-      render: (course: Course) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          course.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-        }`}>
-          {course.isPublished ? 'Published' : 'Draft'}
-        </span>
-      )
-    },
-    { 
-      key: 'enrollments', 
-      label: 'Enrollments',
-      render: (course: Course) => course.enrollmentCount || 0
-    },
-    { 
-      key: 'created', 
-      label: 'Created',
-      render: (course: Course) => new Date(course.createdAt).toLocaleDateString()
+    { key: "id", label: "ID" },
+    { key: "title", label: "Course Title" },
+    {
+      key: "tutor",
+      label: "Tutor",
+      render: (course: Course) =>
+        course.tutor
+          ? `${course.tutor.firstName} ${course.tutor.lastName}`
+          : "N/A",
     },
     {
-      key: 'actions',
-      label: 'Actions',
+      key: "price",
+      label: "Price",
+      render: (course: Course) =>
+        Number(course.price) === 0
+          ? "FREE"
+          : `$${Number(course.price).toFixed(2)}`,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (course: Course) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${
+            course.isPublished
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {course.isPublished ? "Published" : "Draft"}
+        </span>
+      ),
+    },
+    {
+      key: "enrollments",
+      label: "Enrollments",
+      render: (course: Course) => course.enrollmentCount || 0,
+    },
+    {
+      key: "created",
+      label: "Created",
+      render: (course: Course) =>
+        new Date(course.createdAt).toLocaleDateString(),
+    },
+    {
+      key: "actions",
+      label: "Actions",
       render: (course: Course) => (
         <button
           onClick={() => router.push(`/courses/review/${course.id}`)}
@@ -88,12 +98,12 @@ export default function CoursesPage() {
         >
           View / Manage
         </button>
-      )
-    }
+      ),
+    },
   ];
 
   // Filter courses by search query
-  const filteredCourses = courses.filter(course => {
+  const filteredCourses = courses.filter((course) => {
     if (!searchQuery) return true;
     return course.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -134,7 +144,7 @@ export default function CoursesPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            <select 
+            <select
               value={publishedFilter}
               onChange={(e) => {
                 setPublishedFilter(e.target.value);
@@ -147,7 +157,7 @@ export default function CoursesPage() {
               <option value="false">Draft</option>
             </select>
           </div>
-          <button 
+          <button
             onClick={loadCourses}
             className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
           >
@@ -164,14 +174,14 @@ export default function CoursesPage() {
           </p>
           <div className="flex space-x-2">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
               className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
               Previous
             </button>
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
