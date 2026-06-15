@@ -102,6 +102,20 @@ export default function AdminMarketplacePage() {
   };
 
   const getStatusBadge = (item: MarketplaceItem) => {
+    if ((item as any).isFreeTrialAd) {
+      if (item.approvalStatus === 'pending') {
+        return (
+          <span className="flex gap-1">
+            <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">Free Trial</span>
+            <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Pending</span>
+          </span>
+        );
+      }
+      if (item.approvalStatus === 'approved') {
+        return <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">Free Trial</span>;
+      }
+    }
+
     if (!item.requiresPayment) {
       return (
         <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
@@ -142,17 +156,17 @@ export default function AdminMarketplacePage() {
     }
   };
 
-  const filteredItems = items.filter((item) => {
-    if (filter === "pending")
-      return item.isPaid && item.approvalStatus === "pending";
-    if (filter === "approved") return item.approvalStatus === "approved";
-    if (filter === "rejected") return item.approvalStatus === "rejected";
+  const isPendingReview = (item: MarketplaceItem) =>
+    item.approvalStatus === 'pending' && (item.isPaid || (item as any).isFreeTrialAd);
+
+  const filteredItems = items.filter(item => {
+    if (filter === "pending") return isPendingReview(item);
+    if (filter === "approved") return item.approvalStatus === 'approved';
+    if (filter === "rejected") return item.approvalStatus === 'rejected';
     return true;
   });
 
-  const pendingCount = items.filter(
-    (i) => i.isPaid && i.approvalStatus === "pending",
-  ).length;
+  const pendingCount = items.filter(i => i.isPaid && i.approvalStatus === 'pending').length;
 
   if (loading) {
     return (
@@ -311,12 +325,15 @@ export default function AdminMarketplacePage() {
                   </td>
                   <td className="px-6 py-4 text-sm">{item.category}</td>
                   <td className="px-6 py-4">
-                    <div className="font-semibold">
-                      {Number(item.price) === 0 ? "FREE" : `$${item.price}`}
-                    </div>
-                    {item.requiresPayment && item.adFee && (
-                      <div className="text-xs text-gray-500">
-                        Fee: ${item.adFee}
+                    <div className="font-semibold">${item.price}</div>
+                    {(item as any).isFreeTrialAd ? (
+                      <div className="text-xs text-purple-600 font-medium">Ad fee: Free (3-month trial)</div>
+                    ) : item.requiresPayment && item.adFee ? (
+                      <div className="text-xs text-gray-500">Fee: ${item.adFee}</div>
+                    ) : null}
+                    {item.approvalStatus === 'approved' && (item as any).expiresAt && (
+                      <div className="text-xs text-gray-400">
+                        Expires: {new Date((item as any).expiresAt).toLocaleDateString()}
                       </div>
                     )}
                   </td>
@@ -325,7 +342,7 @@ export default function AdminMarketplacePage() {
                     {new Date(item.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
-                    {item.isPaid && item.approvalStatus === "pending" && (
+                    {isPendingReview(item) && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleApprove(item)}
