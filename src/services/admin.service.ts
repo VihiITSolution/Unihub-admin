@@ -461,6 +461,47 @@ export const adminService = {
   },
 
   /**
+   * Get all boarding places (admin)
+   */
+  async getBoardingPlaces(filters: { page?: number; limit?: number } = {}): Promise<ApiResponse<{ places: BoardingPlace[]; pagination: any }>> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.page) params.append("page", String(filters.page));
+      if (filters.limit) params.append("limit", String(filters.limit));
+      const response = await apiClient.get<ApiResponse<{ places: BoardingPlace[]; pagination: any }>>(
+        `/admin/boarding/places?${params.toString()}`
+      );
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch boarding places", data: { places: [], pagination: null } };
+    }
+  },
+
+  /**
+   * Approve a boarding place
+   */
+  async approveBoardingPlace(id: number): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.put<ApiResponse<any>>(`/admin/boarding/places/${id}/approve`);
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to approve boarding place" };
+    }
+  },
+
+  /**
+   * Reject a boarding place
+   */
+  async rejectBoardingPlace(id: number, reason: string): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiClient.put<ApiResponse<any>>(`/admin/boarding/places/${id}/reject`, { reason });
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to reject boarding place" };
+    }
+  },
+
+  /**
    * Get tutor profile details
    */
   async getTutorProfile(id: number): Promise<ApiResponse<TutorProfile>> {
@@ -630,6 +671,38 @@ export const adminService = {
     }
   },
 };
+
+export interface BoardingPlace {
+  id: number;
+  vendorId: number;
+  vendor?: { id: number; firstName: string; lastName: string; email: string };
+  title: string;
+  description: string;
+  address: string;
+  city: string;
+  district?: string;
+  nearestUniversity?: string;
+  distanceToUniversity?: number;
+  roomType: string;
+  genderPreference: string;
+  capacity: number;
+  availableSlots: number;
+  monthlyRent: number;
+  securityDeposit?: number;
+  amenities?: string[];
+  rules?: string;
+  images?: string[];
+  contactPhone: string;
+  contactEmail?: string;
+  isActive: boolean;
+  isPaid: boolean;
+  adFee: number;
+  expiresAt?: string;
+  approvalStatus: "pending" | "approved" | "rejected";
+  rejectionReason?: string;
+  isFreeTrialAd?: boolean;
+  createdAt: string;
+}
 
 // Additional types for course details
 export interface TutorProfile {

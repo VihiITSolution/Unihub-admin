@@ -325,21 +325,17 @@ export default function AdminMarketplacePage() {
                   </td>
                   <td className="px-6 py-4 text-sm">{item.category}</td>
                   <td className="px-6 py-4">
-                    <div className="font-semibold">${item.price}</div>
+                    <div className="font-semibold">
+                      {Number(item.price) === 0 ? "FREE" : `Rs. ${item.price}`}
+                    </div>
                     {(item as any).isFreeTrialAd ? (
                       <div className="text-xs text-purple-600 font-medium">Ad fee: Free (3-month trial)</div>
                     ) : item.requiresPayment && item.adFee ? (
-                      <div className="text-xs text-gray-500">Fee: ${item.adFee}</div>
+                      <div className="text-xs text-gray-500">Fee: Rs. {item.adFee}</div>
                     ) : null}
                     {item.approvalStatus === 'approved' && (item as any).expiresAt && (
                       <div className="text-xs text-gray-400">
                         Expires: {new Date((item as any).expiresAt).toLocaleDateString()}
-                    <div className="font-semibold">
-                      {Number(item.price) === 0 ? "FREE" : `$${item.price}`}
-                    </div>
-                    {item.requiresPayment && item.adFee && (
-                      <div className="text-xs text-gray-500">
-                        Fee: ${item.adFee}
                       </div>
                     )}
                   </td>
@@ -349,7 +345,6 @@ export default function AdminMarketplacePage() {
                   </td>
                   <td className="px-6 py-4">
                     {isPendingReview(item) && (
-                    {item.isPaid && item.approvalStatus === "pending" && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleApprove(item)}
