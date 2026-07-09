@@ -192,7 +192,7 @@ export default function FacultiesPage() {
           for (const [i, d] of seed.departments.entries()) {
             if (!existingDepts.has(d.toLowerCase())) {
               setSeedProgress(`Adding "${d}"…`);
-              try { await facultyService.createDepartment(fid, { name: d, order: i + 1 }); deptCreated++; }
+              try { await facultyService.createDepartment(fid!, { name: d, order: i + 1 }); deptCreated++; }
               catch { errors++; }
             }
           }
@@ -205,7 +205,7 @@ export default function FacultiesPage() {
             for (const [i, d] of seed.departments.entries()) {
               if (fid) {
                 setSeedProgress(`Adding "${d}"…`);
-                try { await facultyService.createDepartment(fid, { name: d, order: i + 1 }); deptCreated++; }
+                try { await facultyService.createDepartment(fid!, { name: d, order: i + 1 }); deptCreated++; }
                 catch { errors++; }
               }
             }
