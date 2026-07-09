@@ -12,8 +12,8 @@ export interface University {
   longitude: number;
   type: 'public' | 'private' | 'international';
   website?: string;
-  contactEmail?: string;
-  contactPhone?: string;
+  phone?: string;
+  email?: string;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -30,68 +30,53 @@ export interface UniversityFormData {
   longitude: number;
   type: 'public' | 'private' | 'international';
   website?: string;
-  contactEmail?: string;
-  contactPhone?: string;
+  phone?: string;
+  email?: string;
   isActive?: boolean;
 }
 
+export interface UniversityFilters {
+  search?: string;
+  type?: string;
+  city?: string;
+  province?: string;
+  isActive?: boolean | undefined;
+}
+
 class UniversityService {
-  /**
-   * Get all universities
-   */
-  async getAll(params?: {
-    city?: string;
-    type?: string;
-    search?: string;
-    isActive?: boolean;
-  }) {
-    const response = await apiClient.get('/universities', { params });
+  async getAll(params?: UniversityFilters) {
+    // Pass isActive=undefined to get ALL universities (backend defaults active=true otherwise)
+    const query: Record<string, any> = { ...params };
+    if (params?.isActive === undefined) delete query.isActive;
+    const response = await apiClient.get('/universities', { params: query });
     return response.data;
   }
 
-  /**
-   * Get university by ID
-   */
   async getById(id: number) {
     const response = await apiClient.get(`/universities/${id}`);
     return response.data;
   }
 
-  /**
-   * Create new university (Admin only)
-   */
   async create(data: UniversityFormData) {
     const response = await apiClient.post('/universities', data);
     return response.data;
   }
 
-  /**
-   * Update university (Admin only)
-   */
   async update(id: number, data: Partial<UniversityFormData>) {
     const response = await apiClient.put(`/universities/${id}`, data);
     return response.data;
   }
 
-  /**
-   * Delete university (Admin only)
-   */
   async delete(id: number) {
     const response = await apiClient.delete(`/universities/${id}`);
     return response.data;
   }
 
-  /**
-   * Toggle university active status (Admin only)
-   */
   async toggleStatus(id: number) {
     const response = await apiClient.patch(`/universities/${id}/toggle-status`);
     return response.data;
   }
 
-  /**
-   * Get cities with universities
-   */
   async getCities() {
     const response = await apiClient.get('/universities/cities');
     return response.data;
