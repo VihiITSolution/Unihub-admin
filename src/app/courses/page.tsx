@@ -55,26 +55,63 @@ export default function CoursesPage() {
           : "N/A",
     },
     {
+      key: "faculty",
+      label: "Faculty / Dept",
+      render: (course: Course) => (
+        <div className="text-xs">
+          {course.faculty ? (
+            <div className="font-medium text-gray-700">{course.faculty.icon ? `${course.faculty.icon} ` : ""}{course.faculty.name}</div>
+          ) : null}
+          {course.department ? (
+            <div className="text-gray-500">{course.department.name}</div>
+          ) : null}
+          {course.year ? (
+            <div className="text-gray-400">Year {course.year}</div>
+          ) : null}
+          {!course.faculty && !course.department && !course.year ? (
+            <span className="text-gray-300">—</span>
+          ) : null}
+        </div>
+      ),
+    },
+    {
       key: "price",
       label: "Price",
       render: (course: Course) =>
         Number(course.price) === 0
           ? "FREE"
-          : `$${Number(course.price).toFixed(2)}`,
+          : `Rs. ${Number(course.price).toFixed(2)}`,
     },
     {
       key: "status",
       label: "Status",
       render: (course: Course) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            course.isPublished
-              ? "bg-green-100 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
-          {course.isPublished ? "Published" : "Draft"}
-        </span>
+        <div className="space-y-1">
+          <span
+            className={`block px-2 py-0.5 rounded-full text-xs font-medium text-center ${
+              course.isPublished
+                ? "bg-green-100 text-green-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
+          >
+            {course.isPublished ? "Published" : "Draft"}
+          </span>
+          {course.approvalStatus && (
+            <span
+              className={`block px-2 py-0.5 rounded-full text-xs font-medium text-center ${
+                course.approvalStatus === "approved"
+                  ? "bg-blue-100 text-blue-800"
+                  : course.approvalStatus === "pending"
+                  ? "bg-orange-100 text-orange-800"
+                  : course.approvalStatus === "rejected"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {course.approvalStatus}
+            </span>
+          )}
+        </div>
       ),
     },
     {

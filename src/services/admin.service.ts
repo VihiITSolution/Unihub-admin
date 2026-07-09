@@ -35,6 +35,11 @@ export interface Course {
   level?: string;
   duration?: number;
   enrollmentCount?: number;
+  facultyId?: number;
+  faculty?: { id: number; name: string; icon?: string };
+  departmentId?: number;
+  department?: { id: number; name: string };
+  year?: number;
   createdAt: string;
   // Approval fields
   approvalStatus?: "draft" | "pending" | "approved" | "rejected";
