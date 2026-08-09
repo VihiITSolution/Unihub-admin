@@ -141,6 +141,15 @@ const Sidebar: React.FC = () => {
       path: "/tutors/pending",
     },
     {
+      name: "All Tutors",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-9v5a6 3 0 0012 0v-5" />
+        </svg>
+      ),
+      path: "/tutors",
+    },
+    {
       name: "Marketplace",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,6 +158,15 @@ const Sidebar: React.FC = () => {
         </svg>
       ),
       path: "/marketplace",
+    },
+    {
+      name: "Bank Transfers",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M5 6h14l2 4H3l2-4zm0 4v8m4-8v8m6-8v8m4-8v8M3 18h18" />
+        </svg>
+      ),
+      path: "/marketplace/bank-transfers",
     },
     {
       name: "Boarding",
@@ -171,6 +189,15 @@ const Sidebar: React.FC = () => {
       path: "/messages",
     },
     {
+      name: "Support Queue",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0M9.172 14.828a4 4 0 015.656-5.656M12 3v3m0 12v3M3 12h3m12 0h3" />
+        </svg>
+      ),
+      path: "/support",
+    },
+    {
       name: "Chat Moderation",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,6 +206,33 @@ const Sidebar: React.FC = () => {
         </svg>
       ),
       path: "/moderation/conversations",
+    },
+    {
+      name: "Blocked Messages",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636A9 9 0 115.636 18.364M6.343 6.343l11.314 11.314" />
+        </svg>
+      ),
+      path: "/moderation/blocked-messages",
+    },
+    {
+      name: "Suggestions",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 18h6m-5 3h4m4-11a6 6 0 10-12 0c0 2 1 3 2 4s1 2 1 2h6s0-1 1-2 2-2 2-4z" />
+        </svg>
+      ),
+      path: "/suggestions",
+    },
+    {
+      name: "Audit Log",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5-4v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3 8 3z" />
+        </svg>
+      ),
+      path: "/audit-logs",
     },
     {
       name: "Analytics",

@@ -96,6 +96,15 @@ export interface Statistics {
   marketplace: {
     totalItems: number;
   };
+  operations: {
+    pendingTutorApplications: number;
+    pendingCourses: number;
+    pendingMarketplaceItems: number;
+    pendingBoardingPlaces: number;
+    pendingBankTransfers: number;
+    unresolvedSupportTickets: number;
+    criticalSupportTickets: number;
+  };
 }
 
 export interface UserFilters {
@@ -116,6 +125,58 @@ export interface MarketplaceFilters {
   isAvailable?: boolean;
   page?: number;
   limit?: number;
+}
+
+export interface AdminPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface SupportTicket {
+  id: number;
+  userId: number;
+  subject: string;
+  category: string;
+  priority: "low" | "medium" | "high" | "critical";
+  description: string;
+  attachments?: string[];
+  status: "open" | "in_progress" | "resolved" | "closed";
+  assignedToAdminId?: number | null;
+  adminResponse?: string;
+  respondedAt?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  user: Pick<User, "id" | "firstName" | "lastName" | "email">;
+  assignedAdmin?: Pick<User, "id" | "firstName" | "lastName" | "email">;
+}
+
+export interface AdminAuditLog {
+  id: number;
+  actorAdminId?: number;
+  action: string;
+  targetType: string;
+  targetId?: string;
+  summary: string;
+  metadata?: {
+    method?: string;
+    path?: string;
+    statusCode?: number;
+    changes?: Record<string, string>;
+  };
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  actorAdmin?: Pick<User, "id" | "firstName" | "lastName" | "email">;
+}
+
+export interface RegistrationSuggestions {
+  universities: string[];
+  faculties: string[];
+  departments: string[];
+  total: number;
 }
 
 /**
@@ -673,6 +734,79 @@ export const adminService = {
           error.message ||
           "Failed to reject tutor application",
       };
+    }
+  },
+
+  async getSupportTickets(filters: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    priority?: string;
+    category?: string;
+    assignedTo?: "me" | "unassigned";
+    search?: string;
+  } = {}): Promise<ApiResponse<{ tickets: SupportTicket[]; pagination: AdminPagination }>> {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") params.set(key, String(value));
+      });
+      const response = await apiClient.get<ApiResponse<{ tickets: SupportTicket[]; pagination: AdminPagination }>>(
+        `/admin/support/tickets?${params.toString()}`,
+      );
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to load support tickets" };
+    }
+  },
+
+  async updateSupportTicket(
+    id: number,
+    changes: {
+      status?: SupportTicket["status"];
+      priority?: SupportTicket["priority"];
+      assignToMe?: boolean;
+      assignedToAdminId?: null;
+      adminResponse?: string;
+    },
+  ): Promise<ApiResponse<{ ticket: SupportTicket }>> {
+    try {
+      const response = await apiClient.put<ApiResponse<{ ticket: SupportTicket }>>(
+        `/admin/support/tickets/${id}`,
+        changes,
+      );
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to update support ticket" };
+    }
+  },
+
+  async getAuditLogs(filters: {
+    page?: number;
+    limit?: number;
+    action?: string;
+    targetType?: string;
+  } = {}): Promise<ApiResponse<{ logs: AdminAuditLog[]; pagination: AdminPagination }>> {
+    try {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") params.set(key, String(value));
+      });
+      const response = await apiClient.get<ApiResponse<{ logs: AdminAuditLog[]; pagination: AdminPagination }>>(
+        `/admin/audit-logs?${params.toString()}`,
+      );
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to load audit logs" };
+    }
+  },
+
+  async getRegistrationSuggestions(): Promise<ApiResponse<RegistrationSuggestions>> {
+    try {
+      const response = await apiClient.get<ApiResponse<RegistrationSuggestions>>("/admin/suggestions");
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to load registration suggestions" };
     }
   },
 };
