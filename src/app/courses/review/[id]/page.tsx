@@ -119,7 +119,7 @@ export default function CourseReviewPage() {
     );
   }
 
-  const { course, courseContent } = courseDetails;
+  const { course, courseContent, youtubeRightsDeclaration } = courseDetails;
   const tutor = course.tutor;
   const tutorProfile = tutor?.tutorProfile;
   const isPublished = course.isPublished;
@@ -310,6 +310,19 @@ export default function CourseReviewPage() {
                             {content.duration && (
                               <p className="text-sm text-gray-500">
                                 {content.duration} mins
+                              </p>
+                            )}
+                            {videoId && (
+                              <p
+                                className={`mt-1 text-xs font-medium ${
+                                  content.youtubeRightsConfirmedAt
+                                    ? "text-green-700"
+                                    : "text-amber-700"
+                                }`}
+                              >
+                                {content.youtubeRightsConfirmedAt
+                                  ? `✓ Rights confirmed ${new Date(content.youtubeRightsConfirmedAt).toLocaleString()}`
+                                  : "No external-link confirmation recorded (platform upload or legacy content)"}
                               </p>
                             )}
                           </div>
@@ -504,6 +517,49 @@ export default function CourseReviewPage() {
               </div>
             ) : (
               <p className="text-gray-500">Tutor information not available</p>
+            )}
+          </Card>
+
+          <Card>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              YouTube Rights Declaration
+            </h3>
+            {youtubeRightsDeclaration ? (
+              <div className="space-y-3 text-sm">
+                <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-green-900">
+                  <p className="font-semibold">✓ Signed record retained</p>
+                  <p className="mt-1">
+                    {youtubeRightsDeclaration.signatoryName} ·{" "}
+                    {new Date(youtubeRightsDeclaration.acceptedAt).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Agreement version</p>
+                  <p className="text-gray-600">{youtubeRightsDeclaration.agreementVersion}</p>
+                </div>
+                <details className="rounded-lg border border-gray-200 p-3">
+                  <summary className="cursor-pointer font-medium text-gray-800">
+                    View signed declaration text
+                  </summary>
+                  <p className="mt-3 whitespace-pre-line leading-6 text-gray-600">
+                    {youtubeRightsDeclaration.agreementText}
+                  </p>
+                </details>
+                <details className="rounded-lg border border-gray-200 p-3 text-xs">
+                  <summary className="cursor-pointer font-medium text-gray-700">
+                    Audit details
+                  </summary>
+                  <dl className="mt-2 space-y-2 break-words text-gray-600">
+                    <div><dt className="font-medium">Record ID</dt><dd>{youtubeRightsDeclaration.id}</dd></div>
+                    <div><dt className="font-medium">IP address</dt><dd>{youtubeRightsDeclaration.acceptedIp || "Not recorded"}</dd></div>
+                    <div><dt className="font-medium">User agent</dt><dd>{youtubeRightsDeclaration.acceptedUserAgent || "Not recorded"}</dd></div>
+                  </dl>
+                </details>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                No signed YouTube rights declaration is on file for this tutor.
+              </div>
             )}
           </Card>
         </div>

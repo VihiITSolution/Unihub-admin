@@ -754,10 +754,26 @@ export interface CourseContent {
   id: number;
   courseId: number;
   title: string;
+  type: "video" | "pdf";
   url?: string;
+  youtubeVideoId?: string;
+  youtubeRightsDeclarationId?: number;
+  youtubeRightsConfirmedAt?: string;
   duration?: number;
   order: number;
   isPublished: boolean;
+}
+
+export interface YouTubeRightsDeclaration {
+  id: number;
+  userId: number;
+  signatoryName: string;
+  agreementVersion: string;
+  agreementText: string;
+  acceptedAt: string;
+  acceptedIp?: string;
+  acceptedUserAgent?: string;
+  createdAt: string;
 }
 
 export interface CourseDetails {
@@ -774,4 +790,5 @@ export interface CourseDetails {
     };
   };
   courseContent: CourseContent[];
+  youtubeRightsDeclaration: YouTubeRightsDeclaration | null;
 }
