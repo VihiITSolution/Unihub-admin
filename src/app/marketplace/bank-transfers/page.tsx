@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { adminService } from "@/services/admin.service";
 import Link from "next/link";
+import { ConfirmDialog, FeedbackBanner } from "@/components/ui/ActionFeedback";
 
 interface BankTransferPayment {
   id: number;
@@ -38,6 +39,8 @@ export default function BankTransfersPage() {
   const [showModal, setShowModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [verifyPayment, setVerifyPayment] = useState<BankTransferPayment | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
 
   useEffect(() => {
     if (!user || (user.roles && !user.roles.includes("admin"))) {
@@ -62,20 +65,24 @@ export default function BankTransfersPage() {
   };
 
   const handleVerify = async (payment: BankTransferPayment) => {
-    if (!confirm("Verify this bank transfer payment?")) return;
+    setVerifyPayment(payment);
+  };
 
+  const confirmVerify = async () => {
+    if (!verifyPayment) return;
     try {
       setProcessing(true);
-      const response = await adminService.verifyBankTransfer(payment.id);
+      setFeedback(null);
+      const response = await adminService.verifyBankTransfer(verifyPayment.id);
       if (response.success) {
-        alert("Payment verified successfully!");
+        setFeedback({ message: "Bank transfer verified successfully.", tone: "success" });
+        setVerifyPayment(null);
         await loadPendingTransfers();
       } else {
-        alert(response.message || "Failed to verify payment");
+        setFeedback({ message: response.message || "Failed to verify payment", tone: "error" });
       }
     } catch (error: any) {
-      console.error("Failed to verify payment:", error);
-      alert(error.message || "Failed to verify payment");
+      setFeedback({ message: error.message || "Failed to verify payment", tone: "error" });
     } finally {
       setProcessing(false);
     }
@@ -89,27 +96,27 @@ export default function BankTransfersPage() {
 
   const handleReject = async () => {
     if (!selectedPayment || !rejectionReason.trim()) {
-      alert("Please provide a reason for rejection");
+      setFeedback({ message: "Please provide a reason for rejection.", tone: "error" });
       return;
     }
 
     try {
       setProcessing(true);
+      setFeedback(null);
       const response = await adminService.rejectBankTransfer(
         selectedPayment.id,
         rejectionReason,
       );
       if (response.success) {
-        alert("Payment rejected successfully!");
+        setFeedback({ message: "Bank transfer rejected successfully.", tone: "success" });
         setShowModal(false);
         setSelectedPayment(null);
         await loadPendingTransfers();
       } else {
-        alert(response.message || "Failed to reject payment");
+        setFeedback({ message: response.message || "Failed to reject payment", tone: "error" });
       }
     } catch (error: any) {
-      console.error("Failed to reject payment:", error);
-      alert(error.message || "Failed to reject payment");
+      setFeedback({ message: error.message || "Failed to reject payment", tone: "error" });
     } finally {
       setProcessing(false);
     }
@@ -127,6 +134,7 @@ export default function BankTransfersPage() {
 
   return (
     <div className="p-8">
+      {feedback && <div className="mb-6"><FeedbackBanner message={feedback.message} tone={feedback.tone} /></div>}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">
@@ -351,6 +359,15 @@ export default function BankTransfersPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={Boolean(verifyPayment)}
+        title="Verify bank transfer?"
+        description={`Confirm that payment #${verifyPayment?.id || ""} for ${verifyPayment?.currency || "LKR"} ${Number(verifyPayment?.amount || 0).toLocaleString()} matches the submitted proof. This action may activate the related listing.`}
+        confirmLabel="Verify payment"
+        processing={processing}
+        onCancel={() => setVerifyPayment(null)}
+        onConfirm={confirmVerify}
+      />
 
       {/* Image Viewer Modal */}
       {viewingProof && (

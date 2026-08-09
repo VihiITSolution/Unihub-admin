@@ -12,6 +12,7 @@ export default function TutorDetailsPage() {
   const [tutor, setTutor] = useState<TutorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [actionError, setActionError] = useState<string>("");
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -24,16 +25,6 @@ export default function TutorDetailsPage() {
     tutorEmail: string;
   } | null>(null);
 
-  // Log component version on mount
-  useEffect(() => {
-    console.log("🎯 ===============================================");
-    console.log("🎯 TUTOR DETAILS PAGE LOADED - VERSION 2.0");
-    console.log("🎯 ===============================================");
-    console.log("🎯 Loaded at:", new Date().toISOString());
-    console.log("🎯 Tutor ID:", tutorId);
-    console.log("🎯 Features: Approve with notification, no redirect");
-  }, []);
-
   useEffect(() => {
     if (tutorId) {
       fetchTutorDetails();
@@ -41,31 +32,20 @@ export default function TutorDetailsPage() {
   }, [tutorId]);
 
   const fetchTutorDetails = async () => {
-    console.log("📥 ============================================");
-    console.log("📥 [Component] Fetching tutor details for ID:", tutorId);
-    console.log("📥 ============================================");
     setLoading(true);
     setError("");
     try {
       const response = await adminService.getTutorProfile(parseInt(tutorId));
-
-      console.log("📥 [Component] getTutorProfile response:", response);
-      console.log("📥 [Component] Response success:", response.success);
-      console.log("📥 [Component] Response data:", response.data);
-
       if (response.success && response.data) {
-        console.log("✅ [Component] Setting tutor data successfully");
         setTutor(response.data);
         setError("");
       } else {
         const errorMsg = response.message || "Failed to fetch tutor details";
-        console.error("❌ [Component] API returned error:", errorMsg);
         setError(errorMsg);
         setTutor(null);
       }
     } catch (err: any) {
       const errorMsg = `Error: ${err?.message || "An error occurred while fetching tutor details"}`;
-      console.error("🛑 [Component] Fetch error:", err);
       setError(errorMsg);
       setTutor(null);
     } finally {
@@ -74,31 +54,23 @@ export default function TutorDetailsPage() {
   };
 
   const handleQuickApprove = async () => {
-    console.log("⚡ APPROVE CLICKED");
     if (!tutor) {
-      alert("❌ No tutor data");
+      setActionError("Tutor data is unavailable.");
       return;
     }
     setShowApproveConfirm(true);
   };
 
   const handleApprove = async () => {
-    console.log("🚀 [APPROVE] BUTTON CLICKED");
-    console.log("🚀 [APPROVE] Tutor ID:", tutor?.id);
-
     if (!tutor) {
-      alert("❌ No tutor data");
+      setError("Tutor data is unavailable.");
       return;
     }
 
     setActionLoading(true);
+    setActionError("");
     try {
-      console.log("🚀 [APPROVE] Calling API endpoint...");
       const response = await adminService.approveTutorApplication(tutor.id);
-
-      console.log("📦 [APPROVE] API Response received");
-      console.log("📦 [APPROVE] Response:", response);
-
       if (response.success) {
         setSuccessMessage({
           type: "approve",
@@ -108,58 +80,34 @@ export default function TutorDetailsPage() {
         setShowApproveConfirm(false);
         setShowApproveModal(false);
 
-        // Wait a moment then refresh
         setTimeout(() => {
-          console.log("✅ [APPROVE] Refreshing data...");
           fetchTutorDetails();
         }, 1500);
       } else {
-        alert(`❌ Approval failed: ${response.message}`);
+        setActionError(response.message || "Approval failed.");
       }
     } catch (err: any) {
-      console.error("🛑 [APPROVE] ERROR:", err);
-      alert(`❌ Error: ${err?.message || "Something went wrong"}`);
+      setActionError(err?.message || "Something went wrong while approving the tutor.");
+    } finally {
       setActionLoading(false);
     }
   };
 
   const handleReject = async () => {
-    console.log("🔴 ============================================");
-    console.log("🔴 REJECT BUTTON CLICKED - NEW CODE VERSION 2.0");
-    console.log("🔴 ============================================");
-    console.log("🔴 Timestamp:", new Date().toISOString());
-
     if (!tutor || !rejectionReason.trim()) {
-      console.log("⚠️ Rejection reason missing");
-      alert("⚠️ Please provide a rejection reason");
+      setActionError("Please provide a rejection reason.");
       return;
     }
 
     setActionLoading(true);
+    setActionError("");
     try {
-      console.log("📝 Rejecting tutor application:", tutor.id);
-      console.log(
-        "📝 Tutor name:",
-        tutor.user?.firstName,
-        tutor.user?.lastName,
-      );
-      console.log("📝 Rejection reason:", rejectionReason);
       const response = await adminService.rejectTutorApplication(
         tutor.id,
         rejectionReason,
       );
-      console.log("📦 ============================================");
-      console.log("📦 API RESPONSE RECEIVED:", response);
-      console.log("📦 Success:", response.success);
-      console.log("📦 Message:", response.message);
-      console.log("📦 ============================================");
 
       if (response.success) {
-        console.log("✅ ============================================");
-        console.log("✅ REJECTION SUCCESSFUL!");
-        console.log("✅ Notification sent to user email");
-        console.log("✅ ============================================");
-
         setSuccessMessage({
           type: "reject",
           tutorName: `${tutor.user?.firstName} ${tutor.user?.lastName}`,
@@ -171,22 +119,12 @@ export default function TutorDetailsPage() {
 
         setTimeout(() => {
           fetchTutorDetails();
-          console.log("✅ Page refreshed successfully!");
         }, 1500);
       } else {
-        console.error("❌ ============================================");
-        console.error("❌ REJECTION FAILED:", response.message);
-        console.error("❌ ============================================");
-        alert(`❌ Failed to reject: ${response.message || "Unknown error"}`);
+        setActionError(response.message || "Failed to reject the tutor application.");
       }
     } catch (err: any) {
-      console.error("🛑 ============================================");
-      console.error("🛑 REJECTION ERROR:", err);
-      console.error("🛑 Error message:", err?.message);
-      console.error("🛑 ============================================");
-      alert(
-        `❌ Error: ${err?.message || "An error occurred while rejecting the application"}`,
-      );
+      setActionError(err?.message || "An error occurred while rejecting the application.");
     } finally {
       setActionLoading(false);
     }
@@ -227,17 +165,6 @@ export default function TutorDetailsPage() {
             Error Loading Tutor Details
           </h2>
           <p className="text-red-800">{error || "Tutor not found"}</p>
-          <details className="mt-4 text-sm text-red-700">
-            <summary className="cursor-pointer font-semibold">
-              Debug Info
-            </summary>
-            <div className="mt-2 p-3 bg-red-100 rounded text-xs font-mono">
-              <div>Tutor ID: {tutorId}</div>
-              <div>Error: {error}</div>
-              <div>Tutor Data: {tutor ? "exists" : "null"}</div>
-              <div>Check browser console for more details</div>
-            </div>
-          </details>
         </div>
       </div>
     );
@@ -290,6 +217,12 @@ export default function TutorDetailsPage() {
           </button>
         </div>
       </div>
+
+      {actionError && (
+        <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+          {actionError}
+        </div>
+      )}
 
       {/* Status Badge */}
       <div className="mb-6">

@@ -18,6 +18,15 @@ const priorityStyles: Record<SupportTicket["priority"], string> = {
   critical: "bg-red-100 text-red-800",
 };
 
+const slaFor = (ticket: SupportTicket) => {
+  if (["resolved", "closed"].includes(ticket.status)) return null;
+  const thresholdHours = { critical: 2, high: 8, medium: 24, low: 48 }[ticket.priority];
+  const ageHours = (Date.now() - new Date(ticket.createdAt).getTime()) / 3_600_000;
+  if (ageHours >= thresholdHours) return { label: "SLA overdue", className: "bg-red-100 text-red-800" };
+  if (ageHours >= thresholdHours * 0.75) return { label: "Due soon", className: "bg-amber-100 text-amber-800" };
+  return null;
+};
+
 export default function SupportPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
@@ -32,6 +41,9 @@ export default function SupportPage() {
   const [responseText, setResponseText] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bulkAction, setBulkAction] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -50,6 +62,7 @@ export default function SupportPage() {
       setSelected((current) =>
         current ? result.data!.tickets.find((ticket) => ticket.id === current.id) || null : null,
       );
+      setSelectedIds((current) => current.filter((id) => result.data!.tickets.some((ticket) => ticket.id === id)));
     } else {
       setError(result.message || "Failed to load support tickets.");
     }
@@ -75,6 +88,32 @@ export default function SupportPage() {
       setError(result.message || "Failed to update the ticket.");
     }
     setSaving(false);
+  };
+
+  const applyBulkAction = async () => {
+    if (!bulkAction || selectedIds.length === 0) return;
+    const changes =
+      bulkAction === "assign"
+        ? { assignToMe: true }
+        : bulkAction === "unassign"
+          ? { assignedToAdminId: null as null }
+          : bulkAction.startsWith("status:")
+            ? { status: bulkAction.slice(7) as SupportTicket["status"] }
+            : { priority: bulkAction.slice(9) as SupportTicket["priority"] };
+
+    setBulkSaving(true);
+    setError("");
+    setNotice("");
+    const result = await adminService.bulkUpdateSupportTickets(selectedIds, changes);
+    if (result.success) {
+      setNotice(result.message || `${selectedIds.length} tickets updated.`);
+      setSelectedIds([]);
+      setBulkAction("");
+      await loadTickets();
+    } else {
+      setError(result.message || "Failed to update selected tickets.");
+    }
+    setBulkSaving(false);
   };
 
   return (
@@ -117,6 +156,44 @@ export default function SupportPage() {
         </div>
       </Card>
 
+      <Card>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <input
+              type="checkbox"
+              checked={tickets.length > 0 && selectedIds.length === tickets.length}
+              onChange={(event) => setSelectedIds(event.target.checked ? tickets.map((ticket) => ticket.id) : [])}
+            />
+            Select this page
+          </label>
+          <span className="text-sm text-gray-500">{selectedIds.length} selected</span>
+          <select
+            value={bulkAction}
+            onChange={(event) => setBulkAction(event.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">Choose a safe bulk action</option>
+            <option value="assign">Assign to me</option>
+            <option value="unassign">Unassign</option>
+            <option value="status:open">Set status: open</option>
+            <option value="status:in_progress">Set status: in progress</option>
+            <option value="priority:critical">Set priority: critical</option>
+            <option value="priority:high">Set priority: high</option>
+            <option value="priority:medium">Set priority: medium</option>
+            <option value="priority:low">Set priority: low</option>
+          </select>
+          <button
+            type="button"
+            disabled={!bulkAction || selectedIds.length === 0 || bulkSaving}
+            onClick={applyBulkAction}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {bulkSaving ? "Updating…" : "Apply to selected"}
+          </button>
+          <p className="text-xs text-gray-500">Resolving and closing tickets remain individual actions so each case is reviewed.</p>
+        </div>
+      </Card>
+
       <div className="grid gap-6 xl:grid-cols-5">
         <div className="xl:col-span-2">
           <Card>
@@ -126,25 +203,40 @@ export default function SupportPage() {
               <p className="py-10 text-center text-gray-500">No tickets match these filters.</p>
             ) : (
               <div className="divide-y">
-                {tickets.map((ticket) => (
-                  <button
-                    key={ticket.id}
-                    onClick={() => { setSelected(ticket); setResponseText(ticket.adminResponse || ""); setNotice(""); }}
-                    className={`w-full p-4 text-left hover:bg-gray-50 ${selected?.id === ticket.id ? "bg-primary-50" : ""}`}
-                  >
+                {tickets.map((ticket) => {
+                  const sla = slaFor(ticket);
+                  return (
+                  <div key={ticket.id} className={`flex items-start gap-3 p-4 hover:bg-gray-50 ${selected?.id === ticket.id ? "bg-primary-50" : ""}`}>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ticket ${ticket.id}`}
+                      checked={selectedIds.includes(ticket.id)}
+                      onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, ticket.id] : current.filter((id) => id !== ticket.id))}
+                      className="mt-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setSelected(ticket); setResponseText(ticket.adminResponse || ""); setNotice(""); }}
+                      className="min-w-0 flex-1 text-left"
+                    >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-gray-900">#{ticket.id} {ticket.subject}</p>
                         <p className="mt-1 truncate text-sm text-gray-500">{ticket.user.firstName} {ticket.user.lastName} · {ticket.category}</p>
                       </div>
-                      <span className={`rounded-full px-2 py-1 text-xs font-medium ${priorityStyles[ticket.priority]}`}>{ticket.priority}</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${priorityStyles[ticket.priority]}`}>{ticket.priority}</span>
+                        {sla && <span className={`rounded-full px-2 py-1 text-xs font-medium ${sla.className}`}>{sla.label}</span>}
+                      </div>
                     </div>
                     <div className="mt-3 flex items-center justify-between text-xs">
                       <span className={`rounded-full px-2 py-1 font-medium ${statusStyles[ticket.status]}`}>{ticket.status.replace("_", " ")}</span>
                       <span className="text-gray-400">{new Date(ticket.createdAt).toLocaleString()}</span>
                     </div>
-                  </button>
-                ))}
+                    </button>
+                  </div>
+                  );
+                })}
               </div>
             )}
             <div className="mt-4 flex items-center justify-between border-t pt-4 text-sm">

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { universityService, University, UniversityFormData } from '@/services/university.service';
+import { ConfirmDialog } from '@/components/ui/ActionFeedback';
 
 // ── Sri Lankan university seed data ──────────────────────────────────────────
 const SL_UNIVERSITIES: UniversityFormData[] = [
@@ -103,6 +104,7 @@ export default function UniversitiesPage() {
   // Seed
   const [seeding, setSeeding] = useState(false);
   const [seedProgress, setSeedProgress] = useState('');
+  const [confirmAction, setConfirmAction] = useState<{ type: 'delete'; university: University } | { type: 'seed' } | null>(null);
 
   const showToast = useCallback((msg: string, type: 'ok' | 'err') => setToast({ msg, type }), []);
 
@@ -205,11 +207,16 @@ export default function UniversitiesPage() {
   };
 
   const handleDelete = async (u: University) => {
-    if (!confirm(`Permanently delete "${u.name}"? This cannot be undone.`)) return;
+    setConfirmAction({ type: 'delete', university: u });
+  };
+
+  const confirmDelete = async () => {
+    if (confirmAction?.type !== 'delete') return;
     try {
-      await universityService.delete(u.id);
+      await universityService.delete(confirmAction.university.id);
       showToast('University deleted', 'ok');
-      load();
+      setConfirmAction(null);
+      await load();
     } catch (err: any) {
       showToast(err.response?.data?.message ?? 'Failed to delete', 'err');
     }
@@ -233,8 +240,12 @@ export default function UniversitiesPage() {
 
   // ── Seed ───────────────────────────────────────────────────────────────────
   const handleSeed = async () => {
-    if (!confirm(`This will add all ${SL_UNIVERSITIES.length} Sri Lankan universities that don't already exist. Continue?`)) return;
+    setConfirmAction({ type: 'seed' });
+  };
+
+  const confirmSeed = async () => {
     setSeeding(true);
+    setConfirmAction(null);
     let created = 0; let skipped = 0; let errors = 0;
     try {
       const existing = new Set(all.map((u) => u.name.toLowerCase().trim()));
@@ -555,6 +566,24 @@ export default function UniversitiesPage() {
       )}
 
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+      <ConfirmDialog
+        open={confirmAction?.type === 'delete'}
+        title="Permanently delete university?"
+        description={`“${confirmAction?.type === 'delete' ? confirmAction.university.name : ''}” will be permanently deleted. The server may block this when related records must be retained.`}
+        confirmLabel="Delete university"
+        tone="danger"
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={confirmDelete}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === 'seed'}
+        title="Add the Sri Lankan university catalogue?"
+        description={`This will add missing entries from the ${SL_UNIVERSITIES.length}-university catalogue. Existing universities with matching names will be skipped.`}
+        confirmLabel="Add missing universities"
+        processing={seeding}
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={confirmSeed}
+      />
     </div>
   );
 }

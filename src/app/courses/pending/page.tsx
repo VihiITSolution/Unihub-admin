@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Table from "@/components/ui/Table";
 import { adminService, Course } from "@/services/admin.service";
+import { ConfirmDialog, FeedbackBanner } from "@/components/ui/ActionFeedback";
 
 export default function PendingCoursesPage() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export default function PendingCoursesPage() {
   });
   const [rejectReason, setRejectReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [approveCourseId, setApproveCourseId] = useState<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     loadCourses();
@@ -48,18 +51,25 @@ export default function PendingCoursesPage() {
   };
 
   const handleApprove = async (courseId: number) => {
-    if (!confirm("Are you sure you want to approve this course?")) return;
+    setApproveCourseId(courseId);
+  };
 
+  const confirmApprove = async () => {
+    if (!approveCourseId) return;
     try {
       setIsProcessing(true);
-      const response = await adminService.approveCourse(courseId);
+      setError(null);
+      setNotice(null);
+      const response = await adminService.approveCourse(approveCourseId);
       if (response.success) {
-        loadCourses();
+        setApproveCourseId(null);
+        setNotice("Course approved successfully.");
+        await loadCourses();
       } else {
-        alert(response.message || "Failed to approve course");
+        setError(response.message || "Failed to approve course");
       }
-    } catch (err) {
-      alert("Failed to approve course");
+    } catch {
+      setError("Failed to approve course");
     } finally {
       setIsProcessing(false);
     }
@@ -72,24 +82,27 @@ export default function PendingCoursesPage() {
 
   const handleReject = async () => {
     if (!rejectModal.courseId || !rejectReason.trim()) {
-      alert("Please provide a reason for rejection");
+      setError("Please provide a reason for rejection");
       return;
     }
 
     try {
       setIsProcessing(true);
+      setError(null);
+      setNotice(null);
       const response = await adminService.rejectCourse(
         rejectModal.courseId,
         rejectReason,
       );
       if (response.success) {
         setRejectModal({ open: false, courseId: null, courseName: "" });
-        loadCourses();
+        setNotice("Course rejected successfully.");
+        await loadCourses();
       } else {
-        alert(response.message || "Failed to reject course");
+        setError(response.message || "Failed to reject course");
       }
-    } catch (err) {
-      alert("Failed to reject course");
+    } catch {
+      setError("Failed to reject course");
     } finally {
       setIsProcessing(false);
     }
@@ -112,7 +125,7 @@ export default function PendingCoursesPage() {
       render: (course: Course) =>
         Number(course.price) === 0
           ? "FREE"
-          : `$${Number(course.price).toFixed(2)}`,
+          : `Rs. ${Number(course.price).toFixed(2)}`,
     },
     {
       key: "level",
@@ -195,10 +208,9 @@ export default function PendingCoursesPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {error}
-        </div>
+        <FeedbackBanner message={error} tone="error" />
       )}
+      {notice && <FeedbackBanner message={notice} />}
 
       <Card>
         {courses.length === 0 ? (
@@ -291,6 +303,15 @@ export default function PendingCoursesPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={approveCourseId !== null}
+        title="Approve course?"
+        description="Approve this course after confirming its content, tutor information, pricing, and rights declaration are acceptable."
+        confirmLabel="Approve course"
+        processing={isProcessing}
+        onCancel={() => setApproveCourseId(null)}
+        onConfirm={confirmApprove}
+      />
     </div>
   );
 }

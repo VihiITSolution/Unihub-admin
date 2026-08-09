@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { adminService } from "@/services/admin.service";
 import type { MarketplaceItem } from "@/services/admin.service";
 import Link from "next/link";
+import { ConfirmDialog, FeedbackBanner } from "@/components/ui/ActionFeedback";
 
 export default function AdminMarketplacePage() {
   const { user } = useAuth();
@@ -21,6 +22,8 @@ export default function AdminMarketplacePage() {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [approveItem, setApproveItem] = useState<MarketplaceItem | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
 
   useEffect(() => {
     if (!user || (user.roles && !user.roles.includes("admin"))) {
@@ -48,20 +51,24 @@ export default function AdminMarketplacePage() {
   };
 
   const handleApprove = async (item: MarketplaceItem) => {
-    if (!confirm(`Approve listing "${item.title}"?`)) return;
+    setApproveItem(item);
+  };
 
+  const confirmApprove = async () => {
+    if (!approveItem) return;
     try {
       setProcessing(true);
-      const response = await adminService.approveMarketplaceItem(item.id);
+      setFeedback(null);
+      const response = await adminService.approveMarketplaceItem(approveItem.id);
       if (response.success) {
-        alert("Item approved successfully!");
+        setFeedback({ message: "Marketplace listing approved successfully.", tone: "success" });
+        setApproveItem(null);
         await loadItems();
       } else {
-        alert(response.message || "Failed to approve item");
+        setFeedback({ message: response.message || "Failed to approve item", tone: "error" });
       }
     } catch (error: any) {
-      console.error("Failed to approve item:", error);
-      alert(error.message || "Failed to approve item");
+      setFeedback({ message: error.message || "Failed to approve item", tone: "error" });
     } finally {
       setProcessing(false);
     }
@@ -75,27 +82,27 @@ export default function AdminMarketplacePage() {
 
   const handleReject = async () => {
     if (!selectedItem || !rejectionReason.trim()) {
-      alert("Please provide a reason for rejection");
+      setFeedback({ message: "Please provide a reason for rejection.", tone: "error" });
       return;
     }
 
     try {
       setProcessing(true);
+      setFeedback(null);
       const response = await adminService.rejectMarketplaceItem(
         selectedItem.id,
         rejectionReason,
       );
       if (response.success) {
-        alert("Item rejected successfully!");
+        setFeedback({ message: "Marketplace listing rejected successfully.", tone: "success" });
         setShowApprovalModal(false);
         setSelectedItem(null);
         await loadItems();
       } else {
-        alert(response.message || "Failed to reject item");
+        setFeedback({ message: response.message || "Failed to reject item", tone: "error" });
       }
     } catch (error: any) {
-      console.error("Failed to reject item:", error);
-      alert(error.message || "Failed to reject item");
+      setFeedback({ message: error.message || "Failed to reject item", tone: "error" });
     } finally {
       setProcessing(false);
     }
@@ -178,6 +185,7 @@ export default function AdminMarketplacePage() {
 
   return (
     <div className="p-8">
+      {feedback && <div className="mb-6"><FeedbackBanner message={feedback.message} tone={feedback.tone} /></div>}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">Marketplace Management</h1>
@@ -417,6 +425,15 @@ export default function AdminMarketplacePage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={Boolean(approveItem)}
+        title="Approve marketplace listing?"
+        description={`Approve “${approveItem?.title || "this listing"}” and make it available according to its current listing settings?`}
+        confirmLabel="Approve listing"
+        processing={processing}
+        onCancel={() => setApproveItem(null)}
+        onConfirm={confirmApprove}
+      />
     </div>
   );
 }

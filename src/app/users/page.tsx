@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
@@ -13,17 +13,19 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [roleFilter, setRoleFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
-  useEffect(() => {
-    loadUsers();
-  }, [page, roleFilter]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const response = await adminService.getUsers({
         role: roleFilter || undefined,
+        isActive: statusFilter === '' ? undefined : statusFilter === 'active',
+        search: searchQuery.trim() || undefined,
         page,
         limit: 10
       });
@@ -39,33 +41,60 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, roleFilter, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadUsers, 300);
+    return () => window.clearTimeout(timer);
+  }, [loadUsers]);
 
   const handleToggleStatus = async (userId: number, currentStatus: boolean) => {
     try {
+      setError(null);
+      setNotice(null);
       const response = await adminService.updateUserStatus(userId, { isActive: !currentStatus });
       if (response.success) {
-        loadUsers();
+        setNotice(`User ${currentStatus ? 'deactivated' : 'activated'} successfully.`);
+        await loadUsers();
       } else {
-        alert(response.message || 'Failed to update user status');
+        setError(response.message || 'Failed to update user status');
       }
     } catch (err) {
-      alert('Failed to update user status');
+      setError('Failed to update user status');
     }
   };
 
-  const handleDeleteUser = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-
+  const handleVerification = async (user: User) => {
     try {
-      const response = await adminService.deleteUser(userId);
+      setError(null);
+      setNotice(null);
+      const response = await adminService.updateUserStatus(user.id, { isVerified: !user.isVerified });
       if (response.success) {
-        loadUsers();
+        setNotice(`User marked as ${user.isVerified ? 'unverified' : 'verified'}.`);
+        await loadUsers();
       } else {
-        alert(response.message || 'Failed to delete user');
+        setError(response.message || 'Failed to update verification');
       }
     } catch (err) {
-      alert('Failed to delete user');
+      setError('Failed to update verification');
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    try {
+      setError(null);
+      setNotice(null);
+      const response = await adminService.deleteUser(userToDelete.id);
+      if (response.success) {
+        setNotice('User deleted successfully.');
+        setUserToDelete(null);
+        await loadUsers();
+      } else {
+        setError(response.message || 'Failed to delete user');
+      }
+    } catch (err) {
+      setError('Failed to delete user');
     }
   };
 
@@ -122,7 +151,13 @@ export default function UsersPage() {
             {user.isActive ? 'Deactivate' : 'Activate'}
           </button>
           <button
-            onClick={() => handleDeleteUser(user.id)}
+            onClick={() => handleVerification(user)}
+            className={`px-3 py-1 rounded text-xs font-medium ${user.isVerified ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'}`}
+          >
+            {user.isVerified ? 'Unverify' : 'Verify'}
+          </button>
+          <button
+            onClick={() => setUserToDelete(user)}
             className="px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200"
           >
             Delete
@@ -131,14 +166,6 @@ export default function UsersPage() {
       )
     }
   ];
-
-  // Filter users by search query
-  const filteredUsers = users.filter(user => {
-    if (!searchQuery) return true;
-    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
-    return fullName.includes(searchQuery.toLowerCase()) || 
-           user.email.toLowerCase().includes(searchQuery.toLowerCase());
-  });
 
   if (isLoading && users.length === 0) {
     return (
@@ -161,8 +188,13 @@ export default function UsersPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
+        </div>
+      )}
+      {notice && (
+        <div role="status" className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+          {notice}
         </div>
       )}
 
@@ -170,7 +202,7 @@ export default function UsersPage() {
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
-          {['', 'learner', 'tutor', 'vendor'].map((role) => (
+          {['', 'student', 'tutor', 'vendor', 'admin'].map((role) => (
             <button
               key={role}
               onClick={() => {
@@ -185,7 +217,7 @@ export default function UsersPage() {
               `}
             >
               {role === '' ? 'All Users' : 
-               role === 'learner' ? 'Students' : 
+               role === 'student' ? 'Students' :
                role.charAt(0).toUpperCase() + role.slice(1) + 's'}
             </button>
           ))}
@@ -193,7 +225,7 @@ export default function UsersPage() {
       </div>
 
       <Card>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex-1 max-w-md">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -203,13 +235,22 @@ export default function UsersPage() {
               </div>
               <input
                 type="text"
-                placeholder={`Search ${roleFilter ? (roleFilter === 'learner' ? 'students' : roleFilter + 's') : 'users'}...`}
+                placeholder={`Search ${roleFilter ? (roleFilter === 'student' ? 'students' : roleFilter + 's') : 'users'}...`}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
+          <select
+            value={statusFilter}
+            onChange={(event) => { setStatusFilter(event.target.value); setPage(1); }}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All account statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
           <button 
             onClick={loadUsers}
             className="ml-3 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center text-gray-700"
@@ -221,7 +262,7 @@ export default function UsersPage() {
           </button>
         </div>
 
-        <Table columns={columns} data={filteredUsers} />
+        <Table columns={columns} data={users} />
 
         {/* Pagination */}
         <div className="mt-4 flex items-center justify-between">
@@ -246,6 +287,21 @@ export default function UsersPage() {
           </div>
         </div>
       </Card>
+
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h2 id="delete-user-title" className="text-xl font-bold text-gray-900">Permanently delete user?</h2>
+            <p className="mt-3 text-gray-600">
+              {userToDelete.firstName} {userToDelete.lastName} ({userToDelete.email}) will be deleted. This cannot be undone and may be blocked when related records must be retained.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setUserToDelete(null)} className="rounded-lg border border-gray-300 px-4 py-2">Cancel</button>
+              <button type="button" onClick={handleDeleteUser} className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white">Delete user</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

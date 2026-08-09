@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { facultyService, Faculty, Department } from '@/services/faculty.service';
+import { ConfirmDialog } from '@/components/ui/ActionFeedback';
 
 // ── Sri Lankan defaults used by the Seed button ───────────────────────────────
 const SEED_DATA: Array<{ name: string; icon: string; order: number; departments: string[] }> = [
@@ -44,6 +45,12 @@ export default function FacultiesPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
   const [seeding, setSeedng] = useState(false);
   const [seedProgress, setSeedProgress] = useState('');
+  const [confirmAction, setConfirmAction] = useState<
+    | { type: 'faculty'; faculty: Faculty }
+    | { type: 'department'; department: Department }
+    | { type: 'seed' }
+    | null
+  >(null);
 
   // Faculty form
   const [showFacultyModal, setShowFacultyModal] = useState(false);
@@ -114,11 +121,16 @@ export default function FacultiesPage() {
   };
 
   const deleteFaculty = async (f: Faculty) => {
-    if (!confirm(`Deactivate faculty "${f.name}"?`)) return;
+    setConfirmAction({ type: 'faculty', faculty: f });
+  };
+
+  const confirmFacultyDelete = async () => {
+    if (confirmAction?.type !== 'faculty') return;
     try {
-      await facultyService.delete(f.id);
+      await facultyService.delete(confirmAction.faculty.id);
       showToast('Faculty deactivated', 'ok');
-      load();
+      setConfirmAction(null);
+      await load();
     } catch {
       showToast('Failed to delete faculty', 'err');
     }
@@ -165,11 +177,16 @@ export default function FacultiesPage() {
   };
 
   const deleteDept = async (dept: Department) => {
-    if (!confirm(`Delete department "${dept.name}"?`)) return;
+    setConfirmAction({ type: 'department', department: dept });
+  };
+
+  const confirmDepartmentDelete = async () => {
+    if (confirmAction?.type !== 'department') return;
     try {
-      await facultyService.deleteDepartment(dept.id);
+      await facultyService.deleteDepartment(confirmAction.department.id);
       showToast('Department deleted', 'ok');
-      load();
+      setConfirmAction(null);
+      await load();
     } catch {
       showToast('Failed to delete department', 'err');
     }
@@ -178,8 +195,12 @@ export default function FacultiesPage() {
   // ── Seed ────────────────────────────────────────────────────────────────────
 
   const handleSeed = async () => {
-    if (!confirm('This will add all missing Sri Lankan faculties and departments. Continue?')) return;
+    setConfirmAction({ type: 'seed' });
+  };
+
+  const confirmSeed = async () => {
     setSeedng(true);
+    setConfirmAction(null);
     let created = 0; let deptCreated = 0; let errors = 0;
     try {
       const existing = (await facultyService.getAll(true)).data?.faculties ?? [];
@@ -472,6 +493,33 @@ export default function FacultiesPage() {
       )}
 
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+      <ConfirmDialog
+        open={confirmAction?.type === 'faculty'}
+        title="Deactivate faculty?"
+        description={`“${confirmAction?.type === 'faculty' ? confirmAction.faculty.name : ''}” will no longer be available for new catalogue selections.`}
+        confirmLabel="Deactivate faculty"
+        tone="danger"
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={confirmFacultyDelete}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === 'department'}
+        title="Delete department?"
+        description={`“${confirmAction?.type === 'department' ? confirmAction.department.name : ''}” will be deleted if it is not protected by related records.`}
+        confirmLabel="Delete department"
+        tone="danger"
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={confirmDepartmentDelete}
+      />
+      <ConfirmDialog
+        open={confirmAction?.type === 'seed'}
+        title="Add the default faculties and departments?"
+        description="Missing Sri Lankan faculty and department catalogue entries will be created. Existing matching entries are skipped."
+        confirmLabel="Add missing entries"
+        processing={seeding}
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={confirmSeed}
+      />
     </div>
   );
 }

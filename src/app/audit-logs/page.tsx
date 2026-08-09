@@ -9,6 +9,7 @@ export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [targetType, setTargetType] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -19,6 +20,7 @@ export default function AuditLogsPage() {
       page,
       limit: 50,
       targetType: targetType || undefined,
+      search: search.trim() || undefined,
     });
     if (result.success && result.data) {
       setLogs(result.data.logs);
@@ -27,7 +29,7 @@ export default function AuditLogsPage() {
       setError(result.message || "Failed to load audit logs.");
     }
     setLoading(false);
-  }, [page, targetType]);
+  }, [page, targetType, search]);
 
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
@@ -40,6 +42,12 @@ export default function AuditLogsPage() {
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{error}</div>}
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <input
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
+            placeholder="Search action, summary, or target ID"
+            className="min-w-72 rounded-lg border border-gray-300 px-3 py-2"
+          />
           <select value={targetType} onChange={(event) => { setTargetType(event.target.value); setPage(1); }} className="rounded-lg border border-gray-300 px-3 py-2">
             <option value="">All target types</option>
             <option value="user">Users</option>
@@ -50,6 +58,11 @@ export default function AuditLogsPage() {
             <option value="payment">Payments</option>
             <option value="conversation">Conversations</option>
             <option value="support_ticket">Support tickets</option>
+            <option value="session">Administrator sessions</option>
+            <option value="category">Categories</option>
+            <option value="university">Universities</option>
+            <option value="faculty">Faculties</option>
+            <option value="department">Departments</option>
           </select>
           <button onClick={loadLogs} className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50">Refresh</button>
         </div>

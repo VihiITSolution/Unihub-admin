@@ -110,6 +110,7 @@ export interface Statistics {
 export interface UserFilters {
   role?: string;
   isActive?: boolean;
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -179,6 +180,30 @@ export interface RegistrationSuggestions {
   total: number;
 }
 
+export interface SystemStatus {
+  checkedAt: string;
+  environment: string;
+  uptimeSeconds: number;
+  services: {
+    api: { status: string };
+    database: { status: string; message: string };
+    mediaUploads: { status: string };
+    youtube: { status: string };
+  };
+  security: {
+    jwtSecretConfigured: boolean;
+    corsAllowlistConfigured: boolean;
+    productionMode: boolean;
+  };
+  commercial: {
+    freeMarketplaceTrialEnabled: boolean;
+    freeMarketplaceTrialEndDate: string | null;
+    payHere: { configured: boolean; mode: string };
+    helaPay: { configured: boolean; mode: string };
+    bankTransferConfigured: boolean;
+  };
+}
+
 /**
  * Admin API Service
  */
@@ -208,6 +233,7 @@ export const adminService = {
       if (filters.role) params.append("role", filters.role);
       if (filters.isActive !== undefined)
         params.append("isActive", String(filters.isActive));
+      if (filters.search) params.append("search", filters.search);
       if (filters.page) params.append("page", String(filters.page));
       if (filters.limit) params.append("limit", String(filters.limit));
 
@@ -572,30 +598,11 @@ export const adminService = {
    */
   async getTutorProfile(id: number): Promise<ApiResponse<TutorProfile>> {
     try {
-      console.log("📥 ========================================");
-      console.log(`📥 [Service] Fetching tutor profile ID: ${id}`);
-      console.log("📥 URL: /admin/tutor-profiles/" + id);
-
       const response = await apiClient.get<ApiResponse<TutorProfile>>(
         `/admin/tutor-profiles/${id}`,
       );
-
-      console.log("📥 ========================================");
-      console.log("📥 Response status:", response.status);
-      console.log("📥 Response data:", response.data);
-      console.log("📥 Success:", response.data?.success);
-      console.log("📥 Has data:", !!response.data?.data);
-      console.log("📥 ========================================");
-
       return response.data;
     } catch (error: any) {
-      console.error("🛑 ========================================");
-      console.error("🛑 [Service] getTutorProfile error");
-      console.error("🛑 Error status:", error.response?.status);
-      console.error("🛑 Error message:", error.message);
-      console.error("🛑 Error response:", error.response?.data);
-      console.error("🛑 ========================================");
-
       return {
         success: false,
         message:
@@ -665,21 +672,11 @@ export const adminService = {
     tutorProfileId: number,
   ): Promise<ApiResponse<TutorProfile>> {
     try {
-      console.log(
-        "[APPROVE] Making PUT request to:",
-        `/admin/tutor-profiles/${tutorProfileId}/approve`,
-      );
-
       const response = await apiClient.put<ApiResponse<TutorProfile>>(
         `/admin/tutor-profiles/${tutorProfileId}/approve`,
       );
-
-      console.log("[APPROVE] Response status:", response.status);
-      console.log("[APPROVE] Response success:", response.data?.success);
-
       return response.data;
     } catch (error: any) {
-      console.error("[APPROVE] Error:", error.message, error.response?.data);
       return {
         success: false,
         message:
@@ -698,35 +695,12 @@ export const adminService = {
     rejectionReason: string,
   ): Promise<ApiResponse<TutorProfile>> {
     try {
-      console.log("🔴 ========================================");
-      console.log(`🔴 [Frontend Service] Reject Tutor ${tutorProfileId}`);
-      console.log("🔴 ========================================");
-      console.log("🔴 Rejection Reason:", rejectionReason);
-
-      const token = localStorage.getItem("admin_token");
-      console.log("🔴 Token available:", !!token);
-
       const response = await apiClient.put<ApiResponse<TutorProfile>>(
         `/admin/tutor-profiles/${tutorProfileId}/reject`,
         { reason: rejectionReason },
       );
-
-      console.log("📦 ========================================");
-      console.log("📦 REJECT RESPONSE RECEIVED");
-      console.log("📦 Status Code:", response.status);
-      console.log("📦 Response Data:", response.data);
-      console.log("📦 ========================================");
-
       return response.data;
     } catch (error: any) {
-      console.error("🛑 ========================================");
-      console.error("🛑 [Frontend Service] Reject Error");
-      console.error("🛑 ========================================");
-      console.error("🛑 Error Status:", error.response?.status);
-      console.error("🛑 Error Message:", error.message);
-      console.error("🛑 Error Response:", error.response?.data);
-      console.error("🛑 ========================================");
-
       return {
         success: false,
         message:
@@ -781,11 +755,32 @@ export const adminService = {
     }
   },
 
+  async bulkUpdateSupportTickets(
+    ticketIds: number[],
+    changes: {
+      status?: SupportTicket["status"];
+      priority?: SupportTicket["priority"];
+      assignToMe?: boolean;
+      assignedToAdminId?: null;
+    },
+  ): Promise<ApiResponse<{ updatedCount: number }>> {
+    try {
+      const response = await apiClient.put<ApiResponse<{ updatedCount: number }>>(
+        "/admin/support/tickets/bulk",
+        { ticketIds, ...changes },
+      );
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to update support tickets" };
+    }
+  },
+
   async getAuditLogs(filters: {
     page?: number;
     limit?: number;
     action?: string;
     targetType?: string;
+    search?: string;
   } = {}): Promise<ApiResponse<{ logs: AdminAuditLog[]; pagination: AdminPagination }>> {
     try {
       const params = new URLSearchParams();
@@ -807,6 +802,19 @@ export const adminService = {
       return response.data;
     } catch (error: any) {
       return { success: false, message: error.response?.data?.message || "Failed to load registration suggestions" };
+    }
+  },
+
+  async getSystemStatus(): Promise<ApiResponse<SystemStatus>> {
+    try {
+      const response = await apiClient.get<ApiResponse<SystemStatus>>("/admin/system-status");
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to load system status",
+        data: error.response?.data?.data,
+      };
     }
   },
 };

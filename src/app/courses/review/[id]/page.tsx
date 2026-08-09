@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
 import YouTubePlayer from "@/components/ui/YouTubePlayer";
 import { adminService, CourseDetails } from "@/services/admin.service";
+import { ConfirmDialog, FeedbackBanner } from "@/components/ui/ActionFeedback";
 
 // Helper function to extract YouTube video ID
 const getYouTubeId = (url: string): string | null => {
@@ -27,6 +28,8 @@ export default function CourseReviewPage() {
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [approveConfirm, setApproveConfirm] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (courseId) {
@@ -52,19 +55,21 @@ export default function CourseReviewPage() {
   };
 
   const handleApprove = async () => {
-    if (!confirm("Are you sure you want to approve this course?")) return;
+    setApproveConfirm(true);
+  };
 
+  const confirmApprove = async () => {
     try {
       setIsProcessing(true);
+      setActionError(null);
       const response = await adminService.approveCourse(courseId);
       if (response.success) {
-        alert("Course approved successfully!");
         router.push("/courses/pending");
       } else {
-        alert(response.message || "Failed to approve course");
+        setActionError(response.message || "Failed to approve course");
       }
-    } catch (err) {
-      alert("Failed to approve course");
+    } catch {
+      setActionError("Failed to approve course");
     } finally {
       setIsProcessing(false);
     }
@@ -72,21 +77,21 @@ export default function CourseReviewPage() {
 
   const handleReject = async () => {
     if (!rejectReason.trim()) {
-      alert("Please provide a reason for rejection");
+      setActionError("Please provide a reason for rejection");
       return;
     }
 
     try {
       setIsProcessing(true);
+      setActionError(null);
       const response = await adminService.rejectCourse(courseId, rejectReason);
       if (response.success) {
-        alert("Course rejected");
         router.push("/courses/pending");
       } else {
-        alert(response.message || "Failed to reject course");
+        setActionError(response.message || "Failed to reject course");
       }
-    } catch (err) {
-      alert("Failed to reject course");
+    } catch {
+      setActionError("Failed to reject course");
     } finally {
       setIsProcessing(false);
     }
@@ -126,6 +131,7 @@ export default function CourseReviewPage() {
 
   return (
     <div className="space-y-6">
+      {actionError && <FeedbackBanner message={actionError} tone="error" />}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -604,6 +610,15 @@ export default function CourseReviewPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={approveConfirm}
+        title="Approve course?"
+        description="Confirm that you reviewed the course content, tutor details, pricing, and the displayed YouTube rights declaration before approval."
+        confirmLabel="Approve course"
+        processing={isProcessing}
+        onCancel={() => setApproveConfirm(false)}
+        onConfirm={confirmApprove}
+      />
     </div>
   );
 }

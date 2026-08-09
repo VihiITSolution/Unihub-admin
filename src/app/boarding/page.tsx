@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { adminService } from "@/services/admin.service";
 import type { BoardingPlace } from "@/services/admin.service";
+import { ConfirmDialog, FeedbackBanner } from "@/components/ui/ActionFeedback";
 
 export default function AdminBoardingPage() {
   const { user } = useAuth();
@@ -16,6 +17,8 @@ export default function AdminBoardingPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [approvePlace, setApprovePlace] = useState<BoardingPlace | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
 
   useEffect(() => {
     if (!user || (user.roles && !user.roles.includes("admin"))) {
@@ -40,18 +43,24 @@ export default function AdminBoardingPage() {
   };
 
   const handleApprove = async (place: BoardingPlace) => {
-    if (!confirm(`Approve listing "${place.title}"?`)) return;
+    setApprovePlace(place);
+  };
+
+  const confirmApprove = async () => {
+    if (!approvePlace) return;
     try {
       setProcessing(true);
-      const response = await adminService.approveBoardingPlace(place.id);
+      setFeedback(null);
+      const response = await adminService.approveBoardingPlace(approvePlace.id);
       if (response.success) {
-        alert("Boarding place approved successfully!");
+        setFeedback({ message: "Boarding place approved successfully.", tone: "success" });
+        setApprovePlace(null);
         await loadPlaces();
       } else {
-        alert(response.message || "Failed to approve");
+        setFeedback({ message: response.message || "Failed to approve", tone: "error" });
       }
     } catch (error: any) {
-      alert(error.message || "Failed to approve");
+      setFeedback({ message: error.message || "Failed to approve", tone: "error" });
     } finally {
       setProcessing(false);
     }
@@ -65,22 +74,23 @@ export default function AdminBoardingPage() {
 
   const handleReject = async () => {
     if (!selectedPlace || !rejectionReason.trim()) {
-      alert("Please provide a reason for rejection");
+      setFeedback({ message: "Please provide a reason for rejection.", tone: "error" });
       return;
     }
     try {
       setProcessing(true);
+      setFeedback(null);
       const response = await adminService.rejectBoardingPlace(selectedPlace.id, rejectionReason);
       if (response.success) {
-        alert("Boarding place rejected.");
+        setFeedback({ message: "Boarding place rejected.", tone: "success" });
         setShowRejectModal(false);
         setSelectedPlace(null);
         await loadPlaces();
       } else {
-        alert(response.message || "Failed to reject");
+        setFeedback({ message: response.message || "Failed to reject", tone: "error" });
       }
     } catch (error: any) {
-      alert(error.message || "Failed to reject");
+      setFeedback({ message: error.message || "Failed to reject", tone: "error" });
     } finally {
       setProcessing(false);
     }
@@ -132,6 +142,7 @@ export default function AdminBoardingPage() {
 
   return (
     <div className="p-8">
+      {feedback && <div className="mb-6"><FeedbackBanner message={feedback.message} tone={feedback.tone} /></div>}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Boarding Management</h1>
         <p className="text-gray-600">Review and moderate boarding place listings</p>
@@ -307,6 +318,15 @@ export default function AdminBoardingPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={Boolean(approvePlace)}
+        title="Approve boarding listing?"
+        description={`Approve “${approvePlace?.title || "this listing"}” using its currently submitted details?`}
+        confirmLabel="Approve listing"
+        processing={processing}
+        onCancel={() => setApprovePlace(null)}
+        onConfirm={confirmApprove}
+      />
     </div>
   );
 }
