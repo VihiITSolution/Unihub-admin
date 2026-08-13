@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: unihub-production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Build and Deploy Admin
@@ -41,7 +45,14 @@ jobs:
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            set -e
+            set -euo pipefail
+
+            sudo -n systemctl is-active --quiet nginx
+            if [ "$(docker inspect --format='{{.State.Running}}' unihub-nginx 2>/dev/null || echo false)" = "true" ]; then
+              echo "Deployment aborted: host Nginx and the legacy Docker Nginx cannot run together"
+              exit 1
+            fi
+
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             docker stop unihub-admin || true
             docker rm unihub-admin || true
@@ -53,4 +64,36 @@ jobs:
               -e NODE_ENV=production \
               -e BACKEND_URL=http://unihub-backend:3000 \
               ${{ secrets.DOCKER_USERNAME }}/unihub-admin:latest
+
+            for attempt in $(seq 1 30); do
+              if docker exec unihub-admin node -e "const http=require('http');const request=http.get('http://127.0.0.1:3002/admin/login',response=>process.exit(response.statusCode<500?0:1));request.on('error',()=>process.exit(1));request.setTimeout(3000,()=>{request.destroy();process.exit(1)});"; then
+                break
+              fi
+              if [ "${attempt}" -eq 30 ]; then
+                echo "Admin container did not become ready"
+                docker logs --tail 100 unihub-admin
+                exit 1
+              fi
+              sleep 2
+            done
+
+            test -x /usr/local/bin/update-docker-hosts.sh
+            sudo -n /usr/local/bin/update-docker-hosts.sh
+            sudo -n nginx -t
+            sudo -n systemctl reload nginx
+
+            for attempt in $(seq 1 15); do
+              if curl --fail --silent --show-error --max-time 15 --insecure \
+                --resolve unihub.lk:443:127.0.0.1 https://unihub.lk/admin/login >/dev/null; then
+                break
+              fi
+              if [ "${attempt}" -eq 15 ]; then
+                echo "Origin smoke test failed after Admin deployment"
+                sudo -n tail -n 100 /var/log/nginx/error.log || true
+                exit 1
+              fi
+              sleep 2
+            done
+
+            docker ps --filter name=unihub-admin --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
             docker image prune -a -f
