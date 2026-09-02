@@ -29,6 +29,7 @@ export default function CourseReviewPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [approveConfirm, setApproveConfirm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,6 +98,23 @@ export default function CourseReviewPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    try {
+      setIsProcessing(true);
+      setActionError(null);
+      const response = await adminService.deleteCourse(courseId);
+      if (response.success) {
+        router.push("/courses");
+      } else {
+        setActionError(response.message || "Failed to delete course");
+      }
+    } catch {
+      setActionError("Failed to delete course");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -151,6 +169,13 @@ export default function CourseReviewPage() {
           </p>
         </div>
         <div className="flex space-x-3">
+          <button
+            onClick={() => setDeleteConfirm(true)}
+            disabled={isProcessing}
+            className="px-6 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50"
+          >
+            Delete Course
+          </button>
           <button
             onClick={() => setRejectModal(true)}
             disabled={isProcessing}
@@ -618,6 +643,16 @@ export default function CourseReviewPage() {
         processing={isProcessing}
         onCancel={() => setApproveConfirm(false)}
         onConfirm={confirmApprove}
+      />
+      <ConfirmDialog
+        open={deleteConfirm}
+        title="Permanently delete course?"
+        description={`Delete “${course.title}” and its course content, enrollments, reviews, and notification requests? Payment and live-session history will be retained.`}
+        confirmLabel="Delete course"
+        processing={isProcessing}
+        tone="danger"
+        onCancel={() => setDeleteConfirm(false)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

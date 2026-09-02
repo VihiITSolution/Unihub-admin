@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Table from "@/components/ui/Table";
 import { adminService, Course } from "@/services/admin.service";
+import { ConfirmDialog } from "@/components/ui/ActionFeedback";
 
 export default function CoursesPage() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function CoursesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [publishedFilter, setPublishedFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadCourses();
@@ -40,6 +43,26 @@ export default function CoursesPage() {
       setError("Failed to load courses");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const confirmDeleteCourse = async () => {
+    if (!courseToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      setError(null);
+      const response = await adminService.deleteCourse(courseToDelete.id);
+      if (response.success) {
+        setCourseToDelete(null);
+        await loadCourses();
+      } else {
+        setError(response.message || "Failed to delete course");
+      }
+    } catch {
+      setError("Failed to delete course");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -129,12 +152,20 @@ export default function CoursesPage() {
       key: "actions",
       label: "Actions",
       render: (course: Course) => (
-        <button
-          onClick={() => router.push(`/courses/review/${course.id}`)}
-          className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
-        >
-          View / Manage
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => router.push(`/courses/review/${course.id}`)}
+            className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
+          >
+            View / Manage
+          </button>
+          <button
+            onClick={() => setCourseToDelete(course)}
+            className="px-3 py-1 rounded border border-red-300 text-xs font-medium text-red-700 hover:bg-red-50"
+          >
+            Delete
+          </button>
+        </div>
       ),
     },
   ];
@@ -227,6 +258,16 @@ export default function CoursesPage() {
           </div>
         </div>
       </Card>
+      <ConfirmDialog
+        open={Boolean(courseToDelete)}
+        title="Permanently delete course?"
+        description={`Delete “${courseToDelete?.title || "this course"}” and its course content, enrollments, reviews, and notification requests? Payment and live-session history will be retained.`}
+        confirmLabel="Delete course"
+        processing={isDeleting}
+        tone="danger"
+        onCancel={() => setCourseToDelete(null)}
+        onConfirm={confirmDeleteCourse}
+      />
     </div>
   );
 }

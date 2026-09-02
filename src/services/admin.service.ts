@@ -321,6 +321,23 @@ export const adminService = {
   },
 
   /**
+   * Permanently remove a course and its non-financial dependent records
+   */
+  async deleteCourse(courseId: number): Promise<ApiResponse<null>> {
+    try {
+      const response = await apiClient.delete<ApiResponse<null>>(
+        `/admin/courses/${courseId}`,
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to delete course",
+      };
+    }
+  },
+
+  /**
    * Get courses pending approval
    */
   async getPendingCourses(

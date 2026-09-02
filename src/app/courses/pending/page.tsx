@@ -26,6 +26,7 @@ export default function PendingCoursesPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [approveCourseId, setApproveCourseId] = useState<number | null>(null);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,6 +79,28 @@ export default function PendingCoursesPage() {
   const openRejectModal = (courseId: number, courseName: string) => {
     setRejectModal({ open: true, courseId, courseName });
     setRejectReason("");
+  };
+
+  const confirmDeleteCourse = async () => {
+    if (!courseToDelete) return;
+
+    try {
+      setIsProcessing(true);
+      setError(null);
+      setNotice(null);
+      const response = await adminService.deleteCourse(courseToDelete.id);
+      if (response.success) {
+        setCourseToDelete(null);
+        setNotice("Course deleted successfully.");
+        await loadCourses();
+      } else {
+        setError(response.message || "Failed to delete course");
+      }
+    } catch {
+      setError("Failed to delete course");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleReject = async () => {
@@ -166,6 +189,13 @@ export default function PendingCoursesPage() {
             className="px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
           >
             Reject
+          </button>
+          <button
+            onClick={() => setCourseToDelete(course)}
+            disabled={isProcessing}
+            className="px-3 py-1 rounded border border-red-300 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+          >
+            Delete
           </button>
         </div>
       ),
@@ -311,6 +341,16 @@ export default function PendingCoursesPage() {
         processing={isProcessing}
         onCancel={() => setApproveCourseId(null)}
         onConfirm={confirmApprove}
+      />
+      <ConfirmDialog
+        open={Boolean(courseToDelete)}
+        title="Permanently delete course?"
+        description={`Delete “${courseToDelete?.title || "this course"}” and its course content, enrollments, reviews, and notification requests? Payment and live-session history will be retained.`}
+        confirmLabel="Delete course"
+        processing={isProcessing}
+        tone="danger"
+        onCancel={() => setCourseToDelete(null)}
+        onConfirm={confirmDeleteCourse}
       />
     </div>
   );
