@@ -84,6 +84,10 @@ export const adminLiveSessionService = {
     try { return (await apiClient.delete(`/admin/live-sessions/${id}`, { data: { reason } })).data; }
     catch (error: any) { return { success: false, message: message(error, "Failed to cancel session") }; }
   },
+  async remove(id: number): Promise<ApiResponse<any>> {
+    try { return (await apiClient.delete(`/admin/live-sessions/${id}/permanent`)).data; }
+    catch (error: any) { return { success: false, message: message(error, "Failed to permanently delete session") }; }
+  },
   async update(id: number, changes: Partial<Pick<AdminLiveSession, "title" | "description" | "scheduledStartTime" | "scheduledEndTime" | "allowRecording">>): Promise<ApiResponse<any>> {
     try { return (await apiClient.put(`/admin/live-sessions/${id}`, changes)).data; }
     catch (error: any) { return { success: false, message: message(error, "Failed to update session") }; }

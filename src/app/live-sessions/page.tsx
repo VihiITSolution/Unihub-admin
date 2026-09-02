@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Card from "@/components/ui/Card";
-import { FeedbackBanner } from "@/components/ui/ActionFeedback";
+import { ConfirmDialog, FeedbackBanner } from "@/components/ui/ActionFeedback";
 import { AdminLiveSession, adminLiveSessionService } from "@/services/live-session.service";
 
 const TZ = "Asia/Colombo";
@@ -36,6 +36,7 @@ export default function LiveSessionsAdminPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<AdminLiveSession | null>(null);
 
   const range = useMemo(() => monthRange(month), [month]);
 
@@ -186,9 +187,27 @@ export default function LiveSessionsAdminPage() {
           {selected.status === "scheduled" && <button disabled={processing} onClick={reschedule} className="rounded border px-4 py-2">Reschedule</button>}
           {!["cancelled","ended","recorded"].includes(selected.status) && <button disabled={processing} onClick={() => confirm("Cancel this session and its Teams calendar event?") && run(() => adminLiveSessionService.cancel(selected.id), "Session cancelled.")} className="rounded border border-red-300 px-4 py-2 text-red-700">Cancel</button>}
           {selected.recordingUrl && <button disabled={processing} onClick={() => confirm("Permanently delete this recording from OneDrive? This cannot be undone.") && run(() => adminLiveSessionService.removeRecording(selected.id), "Recording removed.")} className="rounded bg-red-700 px-4 py-2 text-white">Delete recording</button>}
+          <button disabled={processing} onClick={() => setDeleteConfirm(selected)} className="rounded bg-red-700 px-4 py-2 text-white">Delete session</button>
         </div>
         <div className="mt-6"><h3 className="font-semibold">Enrollments and Teams attendance</h3><div className="mt-2 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Student</th><th className="p-2">Attendance</th><th className="p-2">Duration</th><th className="p-2">Sync</th></tr></thead><tbody>{(selected.enrollments || []).map((item: any) => <tr key={item.id} className="border-b"><td className="p-2">{item.student?.firstName} {item.student?.lastName}<div className="text-xs text-gray-500">{item.student?.email}</div></td><td className="p-2">{item.attended ? "Attended" : "Not recorded"}</td><td className="p-2">{item.attendanceDuration || 0} min</td><td className="p-2">{item.attendanceSource || "unihub"} / {item.attendanceSyncStatus || "pending"}</td></tr>)}</tbody></table></div></div>
       </div></div>}
+      <ConfirmDialog
+        open={Boolean(deleteConfirm)}
+        title="Permanently delete live session?"
+        description={`Delete “${deleteConfirm?.title || "this session"}” and its enrollments, Teams meeting metadata, provider jobs, and event history? This cannot be undone.`}
+        confirmLabel="Delete session"
+        processing={processing}
+        tone="danger"
+        onCancel={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          if (!deleteConfirm) return;
+          run(
+            () => adminLiveSessionService.remove(deleteConfirm.id),
+            "Live session permanently deleted.",
+          );
+          setDeleteConfirm(null);
+        }}
+      />
     </div>
   );
 }
