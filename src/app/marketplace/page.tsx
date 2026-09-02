@@ -23,6 +23,7 @@ export default function AdminMarketplacePage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
   const [approveItem, setApproveItem] = useState<MarketplaceItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<MarketplaceItem | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
 
   useEffect(() => {
@@ -78,6 +79,38 @@ export default function AdminMarketplacePage() {
     setSelectedItem(item);
     setRejectionReason("");
     setShowApprovalModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return;
+
+    try {
+      setProcessing(true);
+      setFeedback(null);
+      const response = await adminService.deleteMarketplaceItem(deleteItem.id);
+      if (response.success) {
+        setItems((currentItems) =>
+          currentItems.filter((item) => item.id !== deleteItem.id),
+        );
+        setFeedback({
+          message: "Marketplace listing deleted successfully.",
+          tone: "success",
+        });
+        setDeleteItem(null);
+      } else {
+        setFeedback({
+          message: response.message || "Failed to delete item",
+          tone: "error",
+        });
+      }
+    } catch (error: any) {
+      setFeedback({
+        message: error.message || "Failed to delete item",
+        tone: "error",
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleReject = async () => {
@@ -352,28 +385,37 @@ export default function AdminMarketplacePage() {
                     {new Date(item.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
-                    {isPendingReview(item) && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(item)}
-                          disabled={processing}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleRejectClick(item)}
-                          disabled={processing}
-                          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {isPendingReview(item) && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(item)}
+                            disabled={processing}
+                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectClick(item)}
+                            disabled={processing}
+                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => setDeleteItem(item)}
+                        disabled={processing}
+                        className="px-3 py-1 border border-red-300 text-red-700 text-sm rounded hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
                     {item.approvalStatus === "rejected" &&
                       item.rejectionReason && (
                         <div
-                          className="text-xs text-red-600"
+                          className="mt-2 text-xs text-red-600"
                           title={item.rejectionReason}
                         >
                           View reason
@@ -433,6 +475,16 @@ export default function AdminMarketplacePage() {
         processing={processing}
         onCancel={() => setApproveItem(null)}
         onConfirm={confirmApprove}
+      />
+      <ConfirmDialog
+        open={Boolean(deleteItem)}
+        title="Delete marketplace listing?"
+        description={`Permanently delete “${deleteItem?.title || "this listing"}”? This action cannot be undone.`}
+        confirmLabel="Delete listing"
+        processing={processing}
+        tone="danger"
+        onCancel={() => setDeleteItem(null)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

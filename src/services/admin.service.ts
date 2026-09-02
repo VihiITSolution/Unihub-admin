@@ -412,6 +412,24 @@ export const adminService = {
   },
 
   /**
+   * Permanently delete a marketplace item
+   */
+  async deleteMarketplaceItem(itemId: number): Promise<ApiResponse<null>> {
+    try {
+      const response = await apiClient.delete<ApiResponse<null>>(
+        `/admin/marketplace/${itemId}`,
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || "Failed to delete marketplace item",
+      };
+    }
+  },
+
+  /**
    * Get detailed course info for review
    */
   async getCourseDetails(
