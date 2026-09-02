@@ -188,7 +188,8 @@ export interface SystemStatus {
     api: { status: string };
     database: { status: string; message: string };
     mediaUploads: { status: string };
-    youtube: { status: string };
+          youtube: { status: string };
+          teams: { status: string; workerEnabled: boolean };
   };
   security: {
     jwtSecretConfigured: boolean;

@@ -150,6 +150,15 @@ const Sidebar: React.FC = () => {
       path: "/tutors",
     },
     {
+      name: "Live Sessions",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+        </svg>
+      ),
+      path: "/live-sessions",
+    },
+    {
       name: "Marketplace",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,7 +293,7 @@ const Sidebar: React.FC = () => {
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       <nav className="px-4 py-6 space-y-2 flex-1">
         {menuItems.map((item) => {
-          const isActive = pathname === item.path;
+          const isActive = pathname === item.path || (item.path !== "/" && pathname.startsWith(item.path + "/"));
           return (
             <Link
               key={item.path}
