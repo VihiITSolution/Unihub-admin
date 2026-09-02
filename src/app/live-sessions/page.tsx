@@ -158,7 +158,7 @@ export default function LiveSessionsAdminPage() {
                 <td className="p-3">{new Date(session.scheduledStartTime).toLocaleString("en-LK", { timeZone: TZ })}</td>
                 <td className="p-3"><span className={`rounded-full px-2 py-1 text-xs ${badge[session.approvalStatus] || "bg-gray-100"}`}>{session.approvalStatus}</span></td>
                 <td className="p-3"><span className={`rounded-full px-2 py-1 text-xs ${badge[session.providerStatus] || "bg-gray-100"}`}>{session.providerStatus}</span>{session.meeting?.lastError && <div className="mt-1 max-w-xs text-xs text-red-600">{session.meeting.lastError}</div>}</td>
-                <td className="p-3"><button onClick={() => open(session.id)} className="rounded bg-gray-100 px-3 py-1.5 hover:bg-gray-200">Manage</button></td>
+                <td className="p-3"><div className="flex flex-wrap gap-2"><button onClick={() => open(session.id)} className="rounded bg-gray-100 px-3 py-1.5 hover:bg-gray-200">Manage</button><button disabled={processing} onClick={() => setDeleteConfirm(session)} className="rounded bg-red-700 px-3 py-1.5 text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60">Delete</button></div></td>
               </tr>)}</tbody>
             </table>
             {sessions.length === 0 && <div className="py-12 text-center text-gray-500">No sessions match these filters.</div>}
