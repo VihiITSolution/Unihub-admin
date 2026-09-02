@@ -18,6 +18,7 @@ export default function AdminBoardingPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
   const [approvePlace, setApprovePlace] = useState<BoardingPlace | null>(null);
+  const [deletePlace, setDeletePlace] = useState<BoardingPlace | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "error" } | null>(null);
 
   useEffect(() => {
@@ -70,6 +71,38 @@ export default function AdminBoardingPage() {
     setSelectedPlace(place);
     setRejectionReason("");
     setShowRejectModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletePlace) return;
+
+    try {
+      setProcessing(true);
+      setFeedback(null);
+      const response = await adminService.deleteBoardingPlace(deletePlace.id);
+      if (response.success) {
+        setPlaces((currentPlaces) =>
+          currentPlaces.filter((place) => place.id !== deletePlace.id),
+        );
+        setFeedback({
+          message: "Boarding place deleted successfully.",
+          tone: "success",
+        });
+        setDeletePlace(null);
+      } else {
+        setFeedback({
+          message: response.message || "Failed to delete boarding place",
+          tone: "error",
+        });
+      }
+    } catch (error: any) {
+      setFeedback({
+        message: error.message || "Failed to delete boarding place",
+        tone: "error",
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleReject = async () => {
@@ -253,26 +286,35 @@ export default function AdminBoardingPage() {
                   <td className="px-6 py-4">{getStatusBadge(place)}</td>
                   <td className="px-6 py-4 text-sm">{new Date(place.createdAt).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
-                    {isPendingReview(place) && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(place)}
-                          disabled={processing}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleRejectClick(place)}
-                          disabled={processing}
-                          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {isPendingReview(place) && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(place)}
+                            disabled={processing}
+                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectClick(place)}
+                            disabled={processing}
+                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => setDeletePlace(place)}
+                        disabled={processing}
+                        className="px-3 py-1 border border-red-300 text-red-700 text-sm rounded hover:bg-red-50 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
                     {place.approvalStatus === "rejected" && place.rejectionReason && (
-                      <div className="text-xs text-red-600" title={place.rejectionReason}>
+                      <div className="mt-2 text-xs text-red-600" title={place.rejectionReason}>
                         View reason
                       </div>
                     )}
@@ -326,6 +368,16 @@ export default function AdminBoardingPage() {
         processing={processing}
         onCancel={() => setApprovePlace(null)}
         onConfirm={confirmApprove}
+      />
+      <ConfirmDialog
+        open={Boolean(deletePlace)}
+        title="Delete boarding listing?"
+        description={`Permanently delete “${deletePlace?.title || "this listing"}”? This action cannot be undone.`}
+        confirmLabel="Delete listing"
+        processing={processing}
+        tone="danger"
+        onCancel={() => setDeletePlace(null)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

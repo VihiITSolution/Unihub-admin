@@ -589,6 +589,24 @@ export const adminService = {
   },
 
   /**
+   * Permanently delete a boarding place
+   */
+  async deleteBoardingPlace(id: number): Promise<ApiResponse<null>> {
+    try {
+      const response = await apiClient.delete<ApiResponse<null>>(
+        `/admin/boarding/places/${id}`,
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || "Failed to delete boarding place",
+      };
+    }
+  },
+
+  /**
    * Approve a boarding place
    */
   async approveBoardingPlace(id: number): Promise<ApiResponse<any>> {
