@@ -12,6 +12,11 @@ export interface User {
   isActive: boolean;
   isVerified: boolean;
   phoneNumber?: string;
+  phoneVerifiedAt?: string;
+  studentProfile?: {
+    studentEmail?: string;
+    studentEmailVerifiedAt?: string;
+  };
   profileImage?: string;
   createdAt: string;
   lastLogin?: string;

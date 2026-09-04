@@ -130,6 +130,22 @@ export default function UsersPage() {
         </span>
       )
     },
+    {
+      key: 'verification',
+      label: 'Verification',
+      render: (user: User) => (
+        <div className="flex flex-col gap-1 text-xs">
+          <span className={user.phoneVerifiedAt ? 'text-green-700' : 'text-gray-500'}>
+            Mobile: {user.phoneVerifiedAt ? 'verified' : 'not verified'}
+          </span>
+          {user.studentProfile && (
+            <span className={user.studentProfile.studentEmailVerifiedAt ? 'text-green-700' : 'text-gray-500'}>
+              Student email: {user.studentProfile.studentEmailVerifiedAt ? 'confirmed' : 'not confirmed'}
+            </span>
+          )}
+        </div>
+      )
+    },
     { 
       key: 'joined', 
       label: 'Joined',
