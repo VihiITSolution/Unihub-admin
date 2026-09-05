@@ -55,6 +55,13 @@ const Sidebar: React.FC = () => {
       path: "/users",
     },
     {
+      name: "Affiliate",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8a4 4 0 01-8 0m8 0a4 4 0 00-8 0m8 0v1a4 4 0 01-8 0V8m8 0h2a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h2" /></svg>
+      ),
+      path: "/affiliate",
+    },
+    {
       name: "Universities",
       icon: (
         <svg
