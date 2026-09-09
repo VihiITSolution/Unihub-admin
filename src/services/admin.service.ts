@@ -22,6 +22,66 @@ export interface User {
   lastLogin?: string;
 }
 
+export interface AdminUserDetails {
+  user: User & {
+    roles?: string[];
+    verifiedPhoneNumber?: string;
+    isStudentProfileComplete?: boolean;
+    isTutorProfileComplete?: boolean;
+    isVendorProfileComplete?: boolean;
+    bio?: string;
+    updatedAt?: string;
+    studentProfile?: {
+      universityName?: string;
+      customUniversity?: string;
+      department?: string;
+      customDepartment?: string;
+      degreeOrCourse?: string;
+      studyingArea?: string;
+      currentYear?: number;
+      currentSemester?: number;
+      studentEmail?: string;
+      studentEmailVerifiedAt?: string;
+      isProfileComplete?: boolean;
+    };
+    tutorProfile?: {
+      qualifications?: string;
+      graduationStatus?: string;
+      expertiseAreas?: string[];
+      coursesSubjects?: string[];
+      yearsOfExperience?: number;
+      approvalStatus?: string;
+      isApproved?: boolean;
+      isProfileComplete?: boolean;
+      totalCourses?: number;
+      totalStudents?: number;
+      averageRating?: number | string;
+    };
+  };
+  activities: {
+    summary: {
+      courses: number;
+      videos: number;
+      marketplaceListings: number;
+      boardingListings: number;
+      enrollments: number;
+      referralsMade: number;
+    };
+    courses: Array<{ id: number; title: string; approvalStatus?: string; isPublished?: boolean; createdAt: string }>;
+    videoLessons: Array<{ id: number; title: string; duration?: number; isPublished?: boolean; createdAt: string; course?: { id: number; title: string; approvalStatus?: string; isPublished?: boolean } }>;
+    marketplaceListings: Array<{ id: number; title: string; category?: string; price?: number | string; isAvailable?: boolean; approvalStatus?: string; createdAt: string }>;
+    boardingListings: Array<{ id: number; title: string; city?: string; monthlyRent?: number | string; isActive?: boolean; approvalStatus?: string; createdAt: string }>;
+    enrollments: Array<{ id: number; status?: string; progress?: number; enrolledAt?: string; completedAt?: string; course?: { id: number; title: string; approvalStatus?: string; isPublished?: boolean } }>;
+    affiliate: {
+      account?: { referralCode: string; isActive: boolean; createdAt: string } | null;
+      referralsMade: Array<{ id: number; status: string; activityType?: string; tierSequence?: number; rewardAmount?: number; createdAt: string; referred?: Pick<User, "id" | "firstName" | "lastName" | "email"> }>;
+      referredBy?: { id: number; status: string; activityType?: string; rewardAmount?: number; createdAt: string; referrer?: Pick<User, "id" | "firstName" | "lastName" | "email"> } | null;
+      payoutRequests: Array<{ id: number; amount: number; status: string; accountMask: string; reviewedAt?: string; paidAt?: string; transferReference?: string; rejectionReason?: string; createdAt: string }>;
+      ledgerEntries: Array<{ id: number; type: string; amount: number; referralId?: number; payoutRequestId?: number; createdAt: string }>;
+    };
+  };
+}
+
 export interface Course {
   id: number;
   title: string;
@@ -321,6 +381,19 @@ export const adminService = {
           courses: [],
           pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
         },
+      };
+    }
+  },
+
+  /** Get a safe account profile and recent user activity for admin review. */
+  async getUserDetails(userId: number): Promise<ApiResponse<AdminUserDetails>> {
+    try {
+      const response = await apiClient.get<ApiResponse<AdminUserDetails>>(`/admin/users/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to load user details",
       };
     }
   },

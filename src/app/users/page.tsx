@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
-import { adminService, User } from '@/services/admin.service';
+import { adminService, AdminUserDetails, User } from '@/services/admin.service';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,6 +17,9 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userDetails, setUserDetails] = useState<AdminUserDetails | null>(null);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -98,6 +101,29 @@ export default function UsersPage() {
     }
   };
 
+  const openUserDetails = async (user: User) => {
+    setSelectedUser(user);
+    setUserDetails(null);
+    setIsDetailsLoading(true);
+    try {
+      const response = await adminService.getUserDetails(user.id);
+      if (response.success && response.data) {
+        setUserDetails(response.data);
+      } else {
+        setError(response.message || 'Failed to load user details');
+      }
+    } catch {
+      setError('Failed to load user details');
+    } finally {
+      setIsDetailsLoading(false);
+    }
+  };
+
+  const closeUserDetails = () => {
+    setSelectedUser(null);
+    setUserDetails(null);
+  };
+
   const columns = [
     { key: 'id', label: 'ID' },
     { 
@@ -155,7 +181,13 @@ export default function UsersPage() {
       key: 'actions',
       label: 'Actions',
       render: (user: User) => (
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => openUserDetails(user)}
+            className="rounded bg-primary-100 px-3 py-1 text-xs font-medium text-primary-800 hover:bg-primary-200"
+          >
+            Details
+          </button>
           <button
             onClick={() => handleToggleStatus(user.id, user.isActive)}
             className={`px-3 py-1 rounded text-xs font-medium ${
@@ -303,6 +335,150 @@ export default function UsersPage() {
           </div>
         </div>
       </Card>
+
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
+          <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl">
+            <div className="flex items-start justify-between border-b border-slate-200 bg-white px-6 py-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-600">Account review</p>
+                <h2 id="user-details-title" className="mt-1 text-2xl font-bold text-slate-900">
+                  {selectedUser.firstName} {selectedUser.lastName}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">{selectedUser.email} · User #{selectedUser.id}</p>
+              </div>
+              <button type="button" onClick={closeUserDetails} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" aria-label="Close user details">
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 6 12 12M18 6 6 18" /></svg>
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-6">
+              {isDetailsLoading && (
+                <div className="flex min-h-64 items-center justify-center text-slate-600">
+                  <div className="mr-3 h-6 w-6 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" /> Loading account activity…
+                </div>
+              )}
+
+              {!isDetailsLoading && !userDetails && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">User details could not be loaded. Please try again.</div>
+              )}
+
+              {userDetails && (() => {
+                const { user, activities } = userDetails;
+                const date = (value?: string) => value ? new Date(value).toLocaleDateString() : '—';
+                const statusClass = (value?: string) => value === 'approved' || value === 'available' || value === 'paid'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : value === 'rejected' || value === 'reversed' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800';
+                const summaryCards = [
+                  ['Courses', activities.summary.courses],
+                  ['Videos', activities.summary.videos],
+                  ['Marketplace', activities.summary.marketplaceListings],
+                  ['Boarding', activities.summary.boardingListings],
+                  ['Learning', activities.summary.enrollments],
+                  ['Referrals', activities.summary.referralsMade],
+                ];
+                return (
+                  <div className="space-y-6">
+                    <section className="rounded-2xl bg-gradient-to-r from-primary-700 to-teal-700 p-5 text-white">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                          <p className="text-lg font-semibold">{user.primaryRole || 'student'} account</p>
+                          <p className="mt-1 text-sm text-white/80">Joined {date(user.createdAt)} · Last login {date(user.lastLogin)}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                          <span className="rounded-full bg-white/15 px-3 py-1.5">{user.isActive ? 'Active' : 'Inactive'}</span>
+                          <span className="rounded-full bg-white/15 px-3 py-1.5">{user.phoneVerifiedAt ? 'Mobile verified' : 'Mobile pending'}</span>
+                          <span className="rounded-full bg-white/15 px-3 py-1.5">{user.isVerified ? 'Account verified' : 'Account unverified'}</span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+                      {summaryCards.map(([label, count]) => (
+                        <div key={String(label)} className="rounded-xl border border-slate-200 bg-white p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+                          <p className="mt-1 text-2xl font-bold text-slate-900">{count}</p>
+                        </div>
+                      ))}
+                    </section>
+
+                    <section className="grid gap-5 lg:grid-cols-2">
+                      <div className="rounded-xl border border-slate-200 bg-white p-5">
+                        <h3 className="font-bold text-slate-900">Profile and verification</h3>
+                        <dl className="mt-4 grid grid-cols-1 gap-x-5 gap-y-3 text-sm sm:grid-cols-2">
+                          <div><dt className="text-slate-500">Mobile</dt><dd className="font-medium text-slate-900">{user.verifiedPhoneNumber || user.phoneNumber || 'Not provided'}</dd></div>
+                          <div><dt className="text-slate-500">Roles</dt><dd className="font-medium text-slate-900">{user.roles?.join(', ') || user.primaryRole || 'student'}</dd></div>
+                          <div><dt className="text-slate-500">Student profile</dt><dd className="font-medium text-slate-900">{user.isStudentProfileComplete ? 'Complete' : 'Incomplete'}</dd></div>
+                          <div><dt className="text-slate-500">Tutor profile</dt><dd className="font-medium text-slate-900">{user.tutorProfile?.approvalStatus || (user.isTutorProfileComplete ? 'Complete' : 'Not started')}</dd></div>
+                        </dl>
+                        {user.studentProfile && (
+                          <div className="mt-5 rounded-lg bg-slate-50 p-4 text-sm">
+                            <p className="font-semibold text-slate-800">Student information</p>
+                            <p className="mt-2 text-slate-600">{user.studentProfile.customUniversity || user.studentProfile.universityName || 'University not set'} · {user.studentProfile.customDepartment || user.studentProfile.department || 'Department not set'}</p>
+                            <p className="mt-1 text-slate-600">{user.studentProfile.degreeOrCourse || 'Course not set'} · Year {user.studentProfile.currentYear || '—'}, semester {user.studentProfile.currentSemester || '—'}</p>
+                            <p className="mt-1 text-slate-600">Student email: {user.studentProfile.studentEmail || 'Not provided'} {user.studentProfile.studentEmailVerifiedAt ? '(confirmed)' : ''}</p>
+                          </div>
+                        )}
+                        {user.tutorProfile && (
+                          <div className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+                            <p className="font-semibold text-slate-800">Tutor information</p>
+                            <p className="mt-1">{user.tutorProfile.yearsOfExperience || 0} years experience · {user.tutorProfile.totalStudents || 0} students</p>
+                            {!!user.tutorProfile.expertiseAreas?.length && <p className="mt-1">{user.tutorProfile.expertiseAreas.join(', ')}</p>}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-white p-5">
+                        <h3 className="font-bold text-slate-900">Affiliate activity</h3>
+                        {activities.affiliate.account ? (
+                          <div className="mt-4 rounded-lg bg-primary-50 p-4 text-sm text-primary-950">
+                            <p className="font-semibold">Referral code: {activities.affiliate.account.referralCode}</p>
+                            <p className="mt-1">Link status: {activities.affiliate.account.isActive ? 'Active' : 'Inactive'}</p>
+                          </div>
+                        ) : <p className="mt-4 text-sm text-slate-500">No affiliate account has been created.</p>}
+                        {activities.affiliate.referredBy && (
+                          <p className="mt-4 text-sm text-slate-600">Referred by <span className="font-semibold text-slate-900">{activities.affiliate.referredBy.referrer?.firstName} {activities.affiliate.referredBy.referrer?.lastName}</span> · {activities.affiliate.referredBy.status}</p>
+                        )}
+                        <div className="mt-4 space-y-2">
+                          {activities.affiliate.referralsMade.slice(0, 6).map((referral) => (
+                            <div key={referral.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
+                              <span className="min-w-0 truncate text-slate-700">{referral.referred ? `${referral.referred.firstName} ${referral.referred.lastName}` : `Referral #${referral.id}`}{referral.activityType ? ` · ${referral.activityType}` : ''}</span>
+                              <span className={`ml-2 shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${statusClass(referral.status)}`}>{referral.status}</span>
+                            </div>
+                          ))}
+                          {!activities.affiliate.referralsMade.length && <p className="text-sm text-slate-500">No referrals made yet.</p>}
+                        </div>
+                        {!!activities.affiliate.payoutRequests.length && <p className="mt-4 text-xs text-slate-500">Latest payout: LKR {activities.affiliate.payoutRequests[0].amount.toLocaleString()} · {activities.affiliate.payoutRequests[0].status} · {activities.affiliate.payoutRequests[0].accountMask}</p>}
+                      </div>
+                    </section>
+
+                    <section className="grid gap-5 lg:grid-cols-2">
+                      <div className="rounded-xl border border-slate-200 bg-white p-5">
+                        <h3 className="font-bold text-slate-900">Teaching and video activity</h3>
+                        <div className="mt-4 space-y-2">
+                          {activities.courses.map((course) => <div key={course.id} className="rounded-lg border border-slate-100 p-3 text-sm"><p className="font-medium text-slate-900">{course.title}</p><p className="mt-1 text-slate-500">{course.approvalStatus || 'draft'} · {course.isPublished ? 'Published' : 'Not published'} · {date(course.createdAt)}</p></div>)}
+                          {!activities.courses.length && <p className="text-sm text-slate-500">No courses created.</p>}
+                        </div>
+                        {!!activities.videoLessons.length && <div className="mt-4 border-t border-slate-100 pt-4"><p className="text-sm font-semibold text-slate-700">Recent videos</p>{activities.videoLessons.slice(0, 6).map((video) => <p key={video.id} className="mt-2 text-sm text-slate-600">{video.title} · {video.duration || 0} min · {video.course?.title || 'Course unavailable'}</p>)}</div>}
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-white p-5">
+                        <h3 className="font-bold text-slate-900">Listings and learning activity</h3>
+                        <div className="mt-4 space-y-2">
+                          {activities.marketplaceListings.map((item) => <div key={`market-${item.id}`} className="rounded-lg border border-slate-100 p-3 text-sm"><p className="font-medium text-slate-900">Marketplace · {item.title}</p><p className="mt-1 text-slate-500">{item.approvalStatus} · LKR {Number(item.price || 0).toLocaleString()} · {date(item.createdAt)}</p></div>)}
+                          {activities.boardingListings.map((place) => <div key={`boarding-${place.id}`} className="rounded-lg border border-slate-100 p-3 text-sm"><p className="font-medium text-slate-900">Boarding · {place.title}</p><p className="mt-1 text-slate-500">{place.city || 'Location not set'} · {place.approvalStatus} · {date(place.createdAt)}</p></div>)}
+                          {!activities.marketplaceListings.length && !activities.boardingListings.length && <p className="text-sm text-slate-500">No marketplace or boarding listings.</p>}
+                        </div>
+                        {!!activities.enrollments.length && <div className="mt-4 border-t border-slate-100 pt-4"><p className="text-sm font-semibold text-slate-700">Recent learning</p>{activities.enrollments.slice(0, 6).map((enrollment) => <p key={enrollment.id} className="mt-2 text-sm text-slate-600">{enrollment.course?.title || 'Course unavailable'} · {enrollment.progress || 0}% · {enrollment.status}</p>)}</div>}
+                      </div>
+                    </section>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {userToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
