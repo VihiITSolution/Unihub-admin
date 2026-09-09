@@ -5,7 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = useAuth();
@@ -296,19 +301,37 @@ const Sidebar: React.FC = () => {
     },
   ];
 
+  const menuGroups = [
+    { label: 'Overview', paths: ['/', '/users', '/affiliate'] },
+    { label: 'Learning', paths: ['/universities', '/faculties', '/courses', '/courses/pending', '/tutors/pending', '/tutors', '/live-sessions'] },
+    { label: 'Operations', paths: ['/marketplace', '/marketplace/bank-transfers', '/boarding', '/messages', '/support'] },
+    { label: 'Trust & settings', paths: ['/moderation/conversations', '/moderation/blocked-messages', '/suggestions', '/audit-logs', '/analytics', '/settings'] },
+  ];
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
-      <nav className="px-4 py-6 space-y-2 flex-1">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.path || (item.path !== "/" && pathname.startsWith(item.path + "/"));
+    <>
+      {isOpen && <button aria-label="Close navigation" onClick={onClose} className="fixed inset-0 z-30 bg-slate-950/30 lg:hidden" />}
+      <aside className={`fixed inset-y-[73px] left-0 z-40 flex w-[280px] flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 lg:sticky lg:top-[73px] lg:z-20 lg:h-[calc(100vh-73px)] lg:w-[272px] lg:translate-x-0 lg:shadow-none ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+        {menuGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{group.label}</p>
+            <div className="space-y-0.5">
+            {menuItems.filter((item) => group.paths.includes(item.path)).map((item) => {
+          const isActive = pathname === item.path || (
+            item.path !== "/" &&
+            pathname.startsWith(item.path + "/") &&
+            !menuItems.some((other) => other.path !== item.path && other.path.startsWith(item.path + "/") && pathname.startsWith(other.path))
+          );
           return (
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+              onClick={onClose}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
                 isActive
-                  ? "bg-primary-50 text-primary-600 font-medium"
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-primary-50 text-primary-700 font-semibold shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               }`}
             >
               {item.icon}
@@ -316,21 +339,24 @@ const Sidebar: React.FC = () => {
             </Link>
           );
         })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* User info and logout */}
-      <div className="px-4 py-4 border-t border-gray-200">
+      <div className="border-t border-slate-200 px-3 py-4">
         {user && (
-          <div className="mb-3 px-4">
-            <p className="text-sm font-medium text-gray-900">
+          <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2.5">
+            <p className="truncate text-sm font-semibold text-slate-800">
               {user.firstName} {user.lastName}
             </p>
-            <p className="text-xs text-gray-500">{user.email}</p>
+            <p className="truncate text-xs text-slate-500">{user.email}</p>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
         >
           <svg
             className="w-5 h-5"
@@ -348,7 +374,8 @@ const Sidebar: React.FC = () => {
           <span>Logout</span>
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 

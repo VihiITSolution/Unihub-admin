@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -14,6 +14,7 @@ interface ClientLayoutProps {
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isLoginPage = pathname === "/login" || pathname === "/admin/login";
 
   return (
@@ -24,11 +25,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       ) : (
         // Protected pages with admin layout
         <ProtectedRoute>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <div className="flex flex-1">
-              <Sidebar />
-              <main className="flex-1 p-6 bg-gray-50">{children}</main>
+          <div className="min-h-screen bg-slate-50">
+            <Header onMenuClick={() => setIsSidebarOpen((open) => !open)} />
+            <div className="flex min-h-[calc(100vh-73px)]">
+              <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+              <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
             </div>
             <Footer />
           </div>
