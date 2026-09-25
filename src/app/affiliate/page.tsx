@@ -87,7 +87,7 @@ export default function AffiliateAdminPage() {
         {loading ? <div className="queue-loading"><i /> Loading the affiliate queues…</div> : tab === "referrals" ? <div className="queue-list">
           {activeRows.length ? activeRows.map((referral) => <article className="queue-row referral-row" key={referral.id}>
             <div className="profile-bubble">{referral.referred?.firstName?.charAt(0)}{referral.referred?.lastName?.charAt(0)}</div>
-            <div className="queue-person"><strong>{referral.referred?.firstName} {referral.referred?.lastName}</strong><span>Referred by {referral.referrer?.firstName} {referral.referrer?.lastName}</span></div>
+            <div className="queue-person"><strong>{referral.referred?.firstName} {referral.referred?.lastName}</strong><span>{referral.referred?.vendorProfile?.shopName ? `Vendor: ${referral.referred.vendorProfile.shopName}` : referral.referred?.studentProfile?.universityName ? `Student: ${referral.referred.studentProfile.universityName}` : "New user"}</span><span>Referred by {referral.referrer?.firstName} {referral.referrer?.lastName}</span></div>
             <div className="queue-detail"><label>Qualifying activity</label><strong>{referral.activityType ? `${referral.activityType} activity` : "Awaiting activity"}</strong></div>
             <div className="queue-detail"><label>Submitted</label><strong>{new Date(referral.createdAt).toLocaleDateString("en-LK")}</strong></div>
             <div className="queue-status"><span className={`status-pill ${referral.status}`}>{referral.status.replace("_", " ")}</span>{referral.riskFlags?.some((flag: any) => flag.status === "open") && <span className="risk-pill">Risk flag</span>}</div>
