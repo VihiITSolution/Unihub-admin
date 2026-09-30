@@ -238,9 +238,12 @@ export default function CourseReviewPage() {
                       ? "FREE"
                       : `$${Number(course.price).toFixed(2)}`}
                   </p>
-                  {course.duration && (
+                  {(Number(course.duration) > 0 || Number(course.durationMinutes) > 0) && (
                     <p className="text-sm text-gray-500">
-                      {course.duration} hours
+                      {[
+                        Number(course.duration) > 0 ? `${course.duration}h` : null,
+                        Number(course.durationMinutes) > 0 ? `${course.durationMinutes}m` : null,
+                      ].filter(Boolean).join(" ")}
                     </p>
                   )}
                 </div>

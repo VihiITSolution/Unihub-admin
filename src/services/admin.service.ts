@@ -99,6 +99,7 @@ export interface Course {
   category?: string;
   level?: string;
   duration?: number;
+  durationMinutes?: number;
   enrollmentCount?: number;
   facultyId?: number;
   faculty?: { id: number; name: string; icon?: string };
