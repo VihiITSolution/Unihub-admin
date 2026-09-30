@@ -802,9 +802,9 @@ export const adminService = {
    */
   async approveTutorApplication(
     tutorProfileId: number,
-  ): Promise<ApiResponse<TutorProfile>> {
+  ): Promise<ApiResponse<{ profile: TutorProfile; emailSent: boolean }>> {
     try {
-      const response = await apiClient.put<ApiResponse<TutorProfile>>(
+      const response = await apiClient.put<ApiResponse<{ profile: TutorProfile; emailSent: boolean }>>(
         `/admin/tutor-profiles/${tutorProfileId}/approve`,
       );
       return response.data;

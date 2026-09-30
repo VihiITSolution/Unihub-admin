@@ -23,6 +23,7 @@ export default function TutorDetailsPage() {
     type: "approve" | "reject";
     tutorName: string;
     tutorEmail: string;
+    emailSent?: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function TutorDetailsPage() {
           type: "approve",
           tutorName: `${tutor.user?.firstName} ${tutor.user?.lastName}`,
           tutorEmail: tutor.user?.email || "User email",
+          emailSent: response.data?.emailSent === true,
         });
         setShowApproveConfirm(false);
         setShowApproveModal(false);
@@ -1052,7 +1054,7 @@ export default function TutorDetailsPage() {
 
                   <div className="bg-green-50 rounded-lg p-4 space-y-2">
                     <p className="text-sm font-semibold text-green-900">
-                      Actions Completed:
+                      Approval result:
                     </p>
                     <ul className="space-y-1 text-sm text-green-800">
                       <li className="flex items-center">
@@ -1069,9 +1071,9 @@ export default function TutorDetailsPage() {
                         </svg>
                         Tutor account enabled
                       </li>
-                      <li className="flex items-center">
+                      <li className={`flex items-center ${successMessage.emailSent ? "" : "text-amber-800"}`}>
                         <svg
-                          className="w-4 h-4 mr-2 text-green-600"
+                          className={`w-4 h-4 mr-2 ${successMessage.emailSent ? "text-green-600" : "text-amber-600"}`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -1081,7 +1083,7 @@ export default function TutorDetailsPage() {
                             clipRule="evenodd"
                           />
                         </svg>
-                        Approval notification sent
+                        {successMessage.emailSent ? "Approval email sent" : "Approval email could not be sent"}
                       </li>
                       <li className="flex items-center">
                         <svg
@@ -1101,8 +1103,9 @@ export default function TutorDetailsPage() {
                   </div>
 
                   <p className="text-sm text-gray-600 text-center pt-2">
-                    The applicant will receive approval notification at{" "}
-                    {successMessage.tutorEmail}
+                    {successMessage.emailSent
+                      ? `An approval email was sent to ${successMessage.tutorEmail}.`
+                      : "The tutor was approved, but the email could not be sent. Check the server logs."}
                   </p>
                 </>
               ) : (

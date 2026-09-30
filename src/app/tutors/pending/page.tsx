@@ -68,7 +68,9 @@ export default function PendingTutorsPage() {
         selectedTutor.id,
       );
       if (response.success) {
-        setNotice("Tutor approved successfully and the applicant was notified.");
+        setNotice(response.data?.emailSent
+          ? "Tutor approved successfully and an email was sent to the applicant."
+          : "Tutor approved successfully, but the approval email could not be sent.");
         setShowApproveModal(false);
         setSelectedTutor(null);
         await fetchTutorApplications();
