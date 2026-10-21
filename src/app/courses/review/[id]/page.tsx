@@ -146,6 +146,9 @@ export default function CourseReviewPage() {
   const tutor = course.tutor;
   const tutorProfile = tutor?.tutorProfile;
   const isPublished = course.isPublished;
+  const hasExternallyLinkedYouTubeVideo = courseContent.some(
+    (content) => Boolean(content.youtubeRightsDeclarationId),
+  );
 
   return (
     <div className="space-y-6">
@@ -556,9 +559,11 @@ export default function CourseReviewPage() {
 
           <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              YouTube Rights Declaration
+              {hasExternallyLinkedYouTubeVideo
+                ? "YouTube Rights Declaration"
+                : "Video hosting"}
             </h3>
-            {youtubeRightsDeclaration ? (
+            {hasExternallyLinkedYouTubeVideo && youtubeRightsDeclaration ? (
               <div className="space-y-3 text-sm">
                 <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-green-900">
                   <p className="font-semibold">✓ Signed record retained</p>
@@ -590,9 +595,13 @@ export default function CourseReviewPage() {
                   </dl>
                 </details>
               </div>
-            ) : (
+            ) : hasExternallyLinkedYouTubeVideo ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                No signed YouTube rights declaration is on file for this tutor.
+                This course includes an externally linked YouTube video, but no signed YouTube rights declaration is on file for this tutor.
+              </div>
+            ) : (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                This course uses UniHub-hosted uploads or non-YouTube materials. A YouTube rights declaration is not required for approval.
               </div>
             )}
           </Card>
@@ -641,7 +650,11 @@ export default function CourseReviewPage() {
       <ConfirmDialog
         open={approveConfirm}
         title="Approve course?"
-        description="Confirm that you reviewed the course content, tutor details, pricing, and the displayed YouTube rights declaration before approval."
+        description={
+          hasExternallyLinkedYouTubeVideo
+            ? "Confirm that you reviewed the course content, tutor details, pricing, and the rights confirmation for each externally linked YouTube video before approval."
+            : "Confirm that you reviewed the course content, tutor details, and pricing before approval. This course does not require a YouTube rights declaration."
+        }
         confirmLabel="Approve course"
         processing={isProcessing}
         onCancel={() => setApproveConfirm(false)}
