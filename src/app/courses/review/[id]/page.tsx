@@ -56,6 +56,7 @@ export default function CourseReviewPage() {
   };
 
   const handleApprove = async () => {
+    setActionError(null);
     setApproveConfirm(true);
   };
 
@@ -656,6 +657,7 @@ export default function CourseReviewPage() {
             : "Confirm that you reviewed the course content, tutor details, and pricing before approval. This course does not require a YouTube rights declaration."
         }
         confirmLabel="Approve course"
+        error={actionError}
         processing={isProcessing}
         onCancel={() => setApproveConfirm(false)}
         onConfirm={confirmApprove}

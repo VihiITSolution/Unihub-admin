@@ -28,6 +28,7 @@ export function ConfirmDialog({
   confirmLabel,
   processing = false,
   tone = "primary",
+  error,
   onCancel,
   onConfirm,
 }: {
@@ -37,6 +38,7 @@ export function ConfirmDialog({
   confirmLabel: string;
   processing?: boolean;
   tone?: "primary" | "danger";
+  error?: string | null;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -46,13 +48,14 @@ export function ConfirmDialog({
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <h2 id="action-dialog-title" className="text-xl font-bold text-gray-900">{title}</h2>
         <p className="mt-3 text-gray-600">{description}</p>
+        {error && <div className="mt-3"><FeedbackBanner message={error} tone="error" /></div>}
         <div className="mt-6 flex justify-end gap-3">
           <button type="button" disabled={processing} onClick={onCancel} className="rounded-lg border border-gray-300 px-4 py-2 disabled:opacity-50">Cancel</button>
           <button
             type="button"
             disabled={processing}
             onClick={onConfirm}
-            className={`rounded-lg px-4 py-2 font-semibold text-white disabled:opacity-50 ${tone === "danger" ? "bg-red-600" : "bg-primary-600"}`}
+            className={`rounded-lg px-4 py-2 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${tone === "danger" ? "bg-red-600 hover:bg-red-700 focus-visible:outline-red-600" : "bg-primary-600 hover:bg-primary-700 focus-visible:outline-primary-600"}`}
           >
             {processing ? "Processing…" : confirmLabel}
           </button>

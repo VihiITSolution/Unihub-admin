@@ -986,6 +986,7 @@ export interface BoardingPlace {
 
 // Additional types for course details
 export interface TutorProfile {
+  youtubeRightsDeclaration?: Pick<YouTubeRightsDeclaration, "id" | "signatoryName" | "acceptedAt" | "agreementVersion"> | null;
   id: number;
   userId: number;
   qualifications?: string;

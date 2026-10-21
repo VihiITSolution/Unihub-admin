@@ -248,6 +248,19 @@ export default function TutorDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Personal Info */}
         <div className="lg:col-span-1 space-y-6">
+          <section className="rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-gray-900">Video rights declaration</h2>
+            <p className={`mt-2 text-sm font-semibold ${tutor.youtubeRightsDeclaration ? "text-green-700" : "text-amber-800"}`}>
+              {tutor.youtubeRightsDeclaration ? "Completed" : "Not completed"}
+            </p>
+            {tutor.youtubeRightsDeclaration ? (
+              <p className="mt-2 text-sm text-gray-600">
+                Signed by {tutor.youtubeRightsDeclaration.signatoryName} on {new Date(tutor.youtubeRightsDeclaration.acceptedAt).toLocaleDateString()}.
+                {" "}Version {tutor.youtubeRightsDeclaration.agreementVersion}.
+              </p>
+            ) : <p className="mt-2 text-sm text-gray-600">Required once when the tutor first uploads a video or adds a YouTube link. This does not block approval of existing direct-upload courses.</p>}
+          </section>
+
           {/* Applicant Card */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-bold mb-4 text-gray-900">
