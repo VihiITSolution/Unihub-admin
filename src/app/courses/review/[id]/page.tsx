@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
 import YouTubePlayer from "@/components/ui/YouTubePlayer";
-import { adminService, CourseDetails } from "@/services/admin.service";
+import { adminService, CourseContent, CourseDetails } from "@/services/admin.service";
 import { ConfirmDialog, FeedbackBanner } from "@/components/ui/ActionFeedback";
 
 // Helper function to extract YouTube video ID
@@ -14,6 +14,27 @@ const getYouTubeId = (url: string): string | null => {
   );
   return match ? match[1] : null;
 };
+
+type MaterialEditor = {
+  id?: number;
+  title: string;
+  type: "video" | "pdf";
+  duration: string;
+  order: string;
+  isPreview: boolean;
+  isPublished: boolean;
+  file: File | null;
+};
+
+const emptyMaterialEditor = (order = 0): MaterialEditor => ({
+  title: "",
+  type: "video",
+  duration: "",
+  order: String(order),
+  isPreview: false,
+  isPublished: true,
+  file: null,
+});
 
 export default function CourseReviewPage() {
   const params = useParams();
@@ -31,6 +52,9 @@ export default function CourseReviewPage() {
   const [approveConfirm, setApproveConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [materialEditor, setMaterialEditor] = useState<MaterialEditor | null>(null);
+  const [isMaterialSaving, setIsMaterialSaving] = useState(false);
+  const [materialUploadProgress, setMaterialUploadProgress] = useState<number | null>(null);
 
   useEffect(() => {
     if (courseId) {
@@ -113,6 +137,121 @@ export default function CourseReviewPage() {
       setActionError("Failed to delete course");
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const openNewMaterialEditor = () => {
+    setActionError(null);
+    setMaterialUploadProgress(null);
+    setMaterialEditor(emptyMaterialEditor(courseDetails?.courseContent.length || 0));
+  };
+
+  const openMaterialEditor = (content: CourseContent) => {
+    setActionError(null);
+    setMaterialUploadProgress(null);
+    setMaterialEditor({
+      id: content.id,
+      title: content.title,
+      type: content.type,
+      duration: content.duration ? String(content.duration) : "",
+      order: String(content.order),
+      isPreview: Boolean(content.isPreview),
+      isPublished: Boolean(content.isPublished),
+      file: null,
+    });
+  };
+
+  const saveMaterial = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!materialEditor) return;
+
+    const title = materialEditor.title.trim();
+    const order = Number(materialEditor.order);
+    const duration = materialEditor.duration ? Number(materialEditor.duration) : undefined;
+    if (!title) {
+      setActionError("A material title is required.");
+      return;
+    }
+    if (!Number.isInteger(order) || order < 0) {
+      setActionError("Display order must be zero or a positive whole number.");
+      return;
+    }
+    if (duration !== undefined && (!Number.isInteger(duration) || duration <= 0)) {
+      setActionError("Duration must be a positive whole number of minutes.");
+      return;
+    }
+    if (!materialEditor.id && !materialEditor.file) {
+      setActionError("Select the video or PDF file supplied by the tutor.");
+      return;
+    }
+
+    try {
+      setIsMaterialSaving(true);
+      setActionError(null);
+      let response;
+
+      if (materialEditor.id) {
+        response = await adminService.updateCourseContent(materialEditor.id, {
+          title,
+          duration,
+          order,
+          isPreview: materialEditor.isPreview,
+          isPublished: materialEditor.isPublished,
+        });
+      } else if (materialEditor.type === "video") {
+        response = await adminService.uploadCourseVideo(
+          courseId,
+          {
+            title,
+            file: materialEditor.file!,
+            duration,
+            order,
+            isPreview: materialEditor.isPreview,
+          },
+          setMaterialUploadProgress,
+        );
+      } else {
+        response = await adminService.uploadCourseDocument(courseId, {
+          title,
+          file: materialEditor.file!,
+          duration,
+          order,
+          isPreview: materialEditor.isPreview,
+        });
+      }
+
+      if (!response.success) {
+        setActionError(response.message || "Unable to save the course material.");
+        return;
+      }
+
+      setMaterialEditor(null);
+      setMaterialUploadProgress(null);
+      await loadCourseDetails();
+    } catch {
+      setActionError("Unable to save the course material.");
+    } finally {
+      setIsMaterialSaving(false);
+    }
+  };
+
+  const removeMaterial = async (content: CourseContent) => {
+    if (!window.confirm(`Remove “${content.title}” from this course?`)) return;
+
+    try {
+      setIsMaterialSaving(true);
+      setActionError(null);
+      const response = await adminService.deleteCourseContent(content.id);
+      if (!response.success) {
+        setActionError(response.message || "Unable to remove the course material.");
+        return;
+      }
+      if (materialEditor?.id === content.id) setMaterialEditor(null);
+      await loadCourseDetails();
+    } catch {
+      setActionError("Unable to remove the course material.");
+    } finally {
+      setIsMaterialSaving(false);
     }
   };
 
@@ -314,9 +453,129 @@ export default function CourseReviewPage() {
 
           {/* Course Content */}
           <Card>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Course Content
-            </h3>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Course Content</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Add and manage materials supplied directly by the tutor.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={openNewMaterialEditor}
+                disabled={isMaterialSaving}
+                className="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+              >
+                + Add material
+              </button>
+            </div>
+
+            {materialEditor && (
+              <form onSubmit={saveMaterial} className="mb-5 space-y-4 rounded-lg border border-primary-200 bg-primary-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-gray-900">
+                    {materialEditor.id ? "Edit material" : "Upload tutor material"}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => { setMaterialEditor(null); setMaterialUploadProgress(null); }}
+                    disabled={isMaterialSaving}
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                    Material title
+                    <input
+                      value={materialEditor.title}
+                      onChange={(event) => setMaterialEditor((current) => current && { ...current, title: event.target.value })}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                      required
+                    />
+                  </label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Type
+                    <select
+                      value={materialEditor.type}
+                      disabled={Boolean(materialEditor.id)}
+                      onChange={(event) => setMaterialEditor((current) => current && { ...current, type: event.target.value as "video" | "pdf" })}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                    >
+                      <option value="video">Video lesson</option>
+                      <option value="pdf">PDF resource</option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Duration (minutes)
+                    <input
+                      type="number"
+                      min="1"
+                      value={materialEditor.duration}
+                      onChange={(event) => setMaterialEditor((current) => current && { ...current, duration: event.target.value })}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                    />
+                  </label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Display order
+                    <input
+                      type="number"
+                      min="0"
+                      value={materialEditor.order}
+                      onChange={(event) => setMaterialEditor((current) => current && { ...current, order: event.target.value })}
+                      className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                      required
+                    />
+                  </label>
+                  {!materialEditor.id && (
+                    <label className="text-sm font-medium text-gray-700">
+                      {materialEditor.type === "video" ? "Video file" : "PDF file"}
+                      <input
+                        type="file"
+                        accept={materialEditor.type === "video" ? "video/*" : "application/pdf"}
+                        onChange={(event) => setMaterialEditor((current) => current && { ...current, file: event.target.files?.[0] || null })}
+                        className="mt-1 block w-full text-sm text-gray-600"
+                        required
+                      />
+                    </label>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={materialEditor.isPreview}
+                      onChange={(event) => setMaterialEditor((current) => current && { ...current, isPreview: event.target.checked })}
+                    />
+                    Free preview
+                  </label>
+                  {materialEditor.id && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={materialEditor.isPublished}
+                        onChange={(event) => setMaterialEditor((current) => current && { ...current, isPublished: event.target.checked })}
+                      />
+                      Published
+                    </label>
+                  )}
+                </div>
+                {materialUploadProgress !== null && (
+                  <p className="text-sm text-primary-700">Uploading video: {materialUploadProgress}%</p>
+                )}
+                <p className="text-xs text-gray-500">
+                  Videos are uploaded in small chunks for reliable large-file uploads. Admin uploads do not require the tutor&apos;s YouTube declaration.
+                </p>
+                <button
+                  type="submit"
+                  disabled={isMaterialSaving}
+                  className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+                >
+                  {isMaterialSaving ? "Saving…" : materialEditor.id ? "Save changes" : "Upload material"}
+                </button>
+              </form>
+            )}
             {courseContent && courseContent.length > 0 ? (
               <div className="space-y-4">
                 {courseContent.map((content, index) => {
@@ -336,7 +595,7 @@ export default function CourseReviewPage() {
                       key={content.id}
                       className="border rounded-lg overflow-hidden"
                     >
-                      <div className="flex items-center justify-between p-3 bg-gray-50">
+                      <div className="flex items-center justify-between gap-3 p-3 bg-gray-50">
                         <div className="flex items-center space-x-3">
                           <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
                             {index + 1}
@@ -364,6 +623,24 @@ export default function CourseReviewPage() {
                               </p>
                             )}
                           </div>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openMaterialEditor(content)}
+                            disabled={isMaterialSaving}
+                            className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-white disabled:opacity-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeMaterial(content)}
+                            disabled={isMaterialSaving}
+                            className="rounded border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Remove
+                          </button>
                         </div>
                       </div>
                       {videoId && (

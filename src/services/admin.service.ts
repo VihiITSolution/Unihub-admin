@@ -416,6 +416,127 @@ export const adminService = {
     }
   },
 
+  /** Add a PDF material to a tutor's course on behalf of the tutor. */
+  async uploadCourseDocument(
+    courseId: number,
+    input: {
+      title: string;
+      file: File;
+      duration?: number;
+      order: number;
+      isPreview: boolean;
+    },
+  ): Promise<ApiResponse<{ content: CourseContent }>> {
+    try {
+      const formData = new FormData();
+      formData.append("title", input.title);
+      formData.append("type", "pdf");
+      formData.append("video", input.file);
+      formData.append("order", String(input.order));
+      formData.append("isPreview", String(input.isPreview));
+      if (input.duration) formData.append("duration", String(input.duration));
+
+      const response = await apiClient.post<ApiResponse<{ content: CourseContent }>>(
+        `/courses/${courseId}/content?type=pdf`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to upload the PDF material",
+      };
+    }
+  },
+
+  /** Upload a video in small chunks so the admin portal can handle large tutor files. */
+  async uploadCourseVideo(
+    courseId: number,
+    input: {
+      title: string;
+      file: File;
+      duration?: number;
+      order: number;
+      isPreview: boolean;
+    },
+    onProgress?: (percent: number) => void,
+  ): Promise<ApiResponse<{ content: CourseContent }>> {
+    const chunkSize = 512 * 1024;
+    const totalChunks = Math.ceil(input.file.size / chunkSize);
+    const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    try {
+      for (let index = 0; index < totalChunks; index += 1) {
+        const formData = new FormData();
+        formData.append("uploadId", uploadId);
+        formData.append("chunkIndex", String(index));
+        formData.append(
+          "chunk",
+          input.file.slice(index * chunkSize, Math.min((index + 1) * chunkSize, input.file.size)),
+          input.file.name,
+        );
+        await apiClient.post(`/courses/${courseId}/content/chunks`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        onProgress?.(Math.round(((index + 1) / totalChunks) * 90));
+      }
+
+      const response = await apiClient.post<ApiResponse<{ content: CourseContent }>>(
+        `/courses/${courseId}/content/chunks/complete`,
+        {
+          uploadId,
+          totalChunks,
+          fileName: input.file.name,
+          title: input.title,
+          type: "video",
+          duration: input.duration ? String(input.duration) : undefined,
+          order: String(input.order),
+          isPreview: String(input.isPreview),
+        },
+      );
+      onProgress?.(100);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to upload the video material",
+      };
+    }
+  },
+
+  /** Update the metadata for a course material. */
+  async updateCourseContent(
+    contentId: number,
+    updates: Pick<CourseContent, "title" | "duration" | "order" | "isPublished"> & { isPreview?: boolean },
+  ): Promise<ApiResponse<{ content: CourseContent }>> {
+    try {
+      const response = await apiClient.put<ApiResponse<{ content: CourseContent }>>(
+        `/content/${contentId}`,
+        updates,
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to update course material",
+      };
+    }
+  },
+
+  /** Remove a course material on behalf of the tutor. */
+  async deleteCourseContent(contentId: number): Promise<ApiResponse<null>> {
+    try {
+      const response = await apiClient.delete<ApiResponse<null>>(`/content/${contentId}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to delete course material",
+      };
+    }
+  },
+
   /**
    * Get courses pending approval
    */
@@ -1038,6 +1159,7 @@ export interface CourseContent {
   duration?: number;
   order: number;
   isPublished: boolean;
+  isPreview?: boolean;
 }
 
 export interface YouTubeRightsDeclaration {
