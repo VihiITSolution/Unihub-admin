@@ -505,6 +505,32 @@ export const adminService = {
     }
   },
 
+  /** Import a public OneDrive video directly to YouTube without downloading it locally. */
+  async importCourseVideoFromOneDrive(
+    courseId: number,
+    input: {
+      title: string;
+      oneDriveUrl: string;
+      duration?: number;
+      order: number;
+      isPreview: boolean;
+    },
+  ): Promise<ApiResponse<{ content: CourseContent }>> {
+    try {
+      const response = await apiClient.post<ApiResponse<{ content: CourseContent }>>(
+        `/admin/courses/${courseId}/content/import-onedrive`,
+        input,
+        { timeout: 30 * 60 * 1000 },
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to import the OneDrive video",
+      };
+    }
+  },
+
   /** Update the metadata for a course material. */
   async updateCourseContent(
     contentId: number,

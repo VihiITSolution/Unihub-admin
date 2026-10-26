@@ -19,6 +19,8 @@ type MaterialEditor = {
   id?: number;
   title: string;
   type: "video" | "pdf";
+  source: "upload" | "oneDrive";
+  oneDriveUrl: string;
   duration: string;
   order: string;
   isPreview: boolean;
@@ -29,6 +31,8 @@ type MaterialEditor = {
 const emptyMaterialEditor = (order = 0): MaterialEditor => ({
   title: "",
   type: "video",
+  source: "upload",
+  oneDriveUrl: "",
   duration: "",
   order: String(order),
   isPreview: false,
@@ -153,6 +157,8 @@ export default function CourseReviewPage() {
       id: content.id,
       title: content.title,
       type: content.type,
+      source: "upload",
+      oneDriveUrl: "",
       duration: content.duration ? String(content.duration) : "",
       order: String(content.order),
       isPreview: Boolean(content.isPreview),
@@ -180,8 +186,12 @@ export default function CourseReviewPage() {
       setActionError("Duration must be a positive whole number of minutes.");
       return;
     }
-    if (!materialEditor.id && !materialEditor.file) {
+    if (!materialEditor.id && materialEditor.source === "upload" && !materialEditor.file) {
       setActionError("Select the video or PDF file supplied by the tutor.");
+      return;
+    }
+    if (!materialEditor.id && materialEditor.source === "oneDrive" && !materialEditor.oneDriveUrl.trim()) {
+      setActionError("Enter the tutor's public OneDrive sharing link.");
       return;
     }
 
@@ -197,6 +207,14 @@ export default function CourseReviewPage() {
           order,
           isPreview: materialEditor.isPreview,
           isPublished: materialEditor.isPublished,
+        });
+      } else if (materialEditor.type === "video" && materialEditor.source === "oneDrive") {
+        response = await adminService.importCourseVideoFromOneDrive(courseId, {
+          title,
+          oneDriveUrl: materialEditor.oneDriveUrl.trim(),
+          duration,
+          order,
+          isPreview: materialEditor.isPreview,
         });
       } else if (materialEditor.type === "video") {
         response = await adminService.uploadCourseVideo(
@@ -528,7 +546,45 @@ export default function CourseReviewPage() {
                       required
                     />
                   </label>
-                  {!materialEditor.id && (
+                  {!materialEditor.id && materialEditor.type === "video" && (
+                    <fieldset className="text-sm font-medium text-gray-700">
+                      <legend>Video source</legend>
+                      <div className="mt-2 flex flex-wrap gap-4">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={materialEditor.source === "upload"}
+                            onChange={() => setMaterialEditor((current) => current && { ...current, source: "upload", oneDriveUrl: "" })}
+                          />
+                          Upload a file
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            checked={materialEditor.source === "oneDrive"}
+                            onChange={() => setMaterialEditor((current) => current && { ...current, source: "oneDrive", file: null })}
+                          />
+                          Import from OneDrive
+                        </label>
+                      </div>
+                    </fieldset>
+                  )}
+                  {!materialEditor.id && materialEditor.source === "oneDrive" ? (
+                    <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                      Public OneDrive sharing link
+                      <input
+                        type="url"
+                        value={materialEditor.oneDriveUrl}
+                        onChange={(event) => setMaterialEditor((current) => current && { ...current, oneDriveUrl: event.target.value })}
+                        placeholder="https://1drv.ms/... or https://onedrive.live.com/..."
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                        required
+                      />
+                      <span className="mt-1 block text-xs font-normal text-gray-500">
+                        The link must allow downloads. UniHub transfers the video server-side and removes the temporary copy after YouTube upload.
+                      </span>
+                    </label>
+                  ) : !materialEditor.id && (
                     <label className="text-sm font-medium text-gray-700">
                       {materialEditor.type === "video" ? "Video file" : "PDF file"}
                       <input
