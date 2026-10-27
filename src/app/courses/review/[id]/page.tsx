@@ -15,12 +15,25 @@ const getYouTubeId = (url: string): string | null => {
   return match ? match[1] : null;
 };
 
+const isSharePointStreamPlayerUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return (
+      url.hostname.toLowerCase().endsWith(".sharepoint.com") &&
+      url.pathname.toLowerCase().includes("/_layouts/15/stream.aspx")
+    );
+  } catch {
+    return false;
+  }
+};
+
 type MaterialEditor = {
   id?: number;
   title: string;
-  type: "video" | "pdf";
+  type: "video" | "pdf" | "link";
   source: "upload" | "oneDrive";
   oneDriveUrl: string;
+  resourceUrl: string;
   duration: string;
   order: string;
   isPreview: boolean;
@@ -33,6 +46,7 @@ const emptyMaterialEditor = (order = 0): MaterialEditor => ({
   type: "video",
   source: "upload",
   oneDriveUrl: "",
+  resourceUrl: "",
   duration: "",
   order: String(order),
   isPreview: false,
@@ -159,6 +173,7 @@ export default function CourseReviewPage() {
       type: content.type,
       source: "upload",
       oneDriveUrl: "",
+      resourceUrl: content.type === "link" ? content.url || "" : "",
       duration: content.duration ? String(content.duration) : "",
       order: String(content.order),
       isPreview: Boolean(content.isPreview),
@@ -186,12 +201,20 @@ export default function CourseReviewPage() {
       setActionError("Duration must be a positive whole number of minutes.");
       return;
     }
-    if (!materialEditor.id && materialEditor.source === "upload" && !materialEditor.file) {
+    if (!materialEditor.id && materialEditor.type !== "link" && materialEditor.source === "upload" && !materialEditor.file) {
       setActionError("Select the video or PDF file supplied by the tutor.");
+      return;
+    }
+    if (materialEditor.type === "link" && !materialEditor.resourceUrl.trim()) {
+      setActionError("Enter a public support-material link.");
       return;
     }
     if (!materialEditor.id && materialEditor.source === "oneDrive" && !materialEditor.oneDriveUrl.trim()) {
       setActionError("Enter the tutor's public OneDrive sharing link.");
+      return;
+    }
+    if (!materialEditor.id && materialEditor.source === "oneDrive" && isSharePointStreamPlayerUrl(materialEditor.oneDriveUrl.trim())) {
+      setActionError("This is a SharePoint Stream player URL. In OneDrive or SharePoint, select the MP4, choose Share > Copy link, allow downloads, then paste that sharing link.");
       return;
     }
 
@@ -207,6 +230,15 @@ export default function CourseReviewPage() {
           order,
           isPreview: materialEditor.isPreview,
           isPublished: materialEditor.isPublished,
+          ...(materialEditor.type === "link" ? { url: materialEditor.resourceUrl.trim() } : {}),
+        });
+      } else if (materialEditor.type === "link") {
+        response = await adminService.addCourseSupportLink(courseId, {
+          title,
+          url: materialEditor.resourceUrl.trim(),
+          duration,
+          order,
+          isPreview: materialEditor.isPreview,
         });
       } else if (materialEditor.type === "video" && materialEditor.source === "oneDrive") {
         response = await adminService.importCourseVideoFromOneDrive(courseId, {
@@ -518,11 +550,12 @@ export default function CourseReviewPage() {
                     <select
                       value={materialEditor.type}
                       disabled={Boolean(materialEditor.id)}
-                      onChange={(event) => setMaterialEditor((current) => current && { ...current, type: event.target.value as "video" | "pdf" })}
+                      onChange={(event) => setMaterialEditor((current) => current && { ...current, type: event.target.value as "video" | "pdf" | "link", file: null, oneDriveUrl: "", resourceUrl: "" })}
                       className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
                     >
                       <option value="video">Video lesson</option>
                       <option value="pdf">PDF resource</option>
+                      <option value="link">Public support link</option>
                     </select>
                   </label>
                   <label className="text-sm font-medium text-gray-700">
@@ -569,19 +602,34 @@ export default function CourseReviewPage() {
                       </div>
                     </fieldset>
                   )}
-                  {!materialEditor.id && materialEditor.source === "oneDrive" ? (
+                  {materialEditor.type === "link" ? (
+                    <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                      Public resource link
+                      <input
+                        type="url"
+                        value={materialEditor.resourceUrl}
+                        onChange={(event) => setMaterialEditor((current) => current && { ...current, resourceUrl: event.target.value })}
+                        placeholder="https://www.youtube.com/watch?v=... or another public resource"
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                        required
+                      />
+                      <span className="mt-1 block text-xs font-normal text-gray-500">
+                        YouTube links play inside UniHub. Other public resources open in UniHub where their provider permits embedding, with an open-link fallback.
+                      </span>
+                    </label>
+                  ) : !materialEditor.id && materialEditor.source === "oneDrive" ? (
                     <label className="text-sm font-medium text-gray-700 sm:col-span-2">
                       Public OneDrive sharing link
                       <input
                         type="url"
                         value={materialEditor.oneDriveUrl}
                         onChange={(event) => setMaterialEditor((current) => current && { ...current, oneDriveUrl: event.target.value })}
-                        placeholder="https://1drv.ms/... or https://onedrive.live.com/..."
+                        placeholder="Share > Copy link from the MP4 file"
                         className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
                         required
                       />
                       <span className="mt-1 block text-xs font-normal text-gray-500">
-                        The link must allow downloads. UniHub transfers the video server-side and removes the temporary copy after YouTube upload.
+                        Use Share &gt; Copy link on the MP4 itself — do not paste a Stream player URL (stream.aspx). The link must allow anyone with the link to download; UniHub transfers it server-side and removes the temporary copy after YouTube upload.
                       </span>
                     </label>
                   ) : !materialEditor.id && (

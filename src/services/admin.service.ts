@@ -531,10 +531,29 @@ export const adminService = {
     }
   },
 
+  /** Add a public support resource without copying it to UniHub storage. */
+  async addCourseSupportLink(
+    courseId: number,
+    input: { title: string; url: string; duration?: number; order: number; isPreview: boolean },
+  ): Promise<ApiResponse<{ content: CourseContent }>> {
+    try {
+      const response = await apiClient.post<ApiResponse<{ content: CourseContent }>>(
+        `/courses/${courseId}/content`,
+        { ...input, type: "link" },
+      );
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to add the support-material link",
+      };
+    }
+  },
+
   /** Update the metadata for a course material. */
   async updateCourseContent(
     contentId: number,
-    updates: Pick<CourseContent, "title" | "duration" | "order" | "isPublished"> & { isPreview?: boolean },
+    updates: Pick<CourseContent, "title" | "duration" | "order" | "isPublished"> & { isPreview?: boolean; url?: string },
   ): Promise<ApiResponse<{ content: CourseContent }>> {
     try {
       const response = await apiClient.put<ApiResponse<{ content: CourseContent }>>(
@@ -1177,7 +1196,7 @@ export interface CourseContent {
   id: number;
   courseId: number;
   title: string;
-  type: "video" | "pdf";
+  type: "video" | "pdf" | "link";
   url?: string;
   youtubeVideoId?: string;
   youtubeRightsDeclarationId?: number;
