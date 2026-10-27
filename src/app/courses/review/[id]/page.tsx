@@ -27,6 +27,22 @@ const isSharePointStreamPlayerUrl = (value: string) => {
   }
 };
 
+const readVideoDurationMinutes = (file: File): Promise<number | null> =>
+  new Promise((resolve) => {
+    const video = document.createElement("video");
+    const objectUrl = URL.createObjectURL(file);
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(Number.isFinite(video.duration) && video.duration > 0 ? Math.ceil(video.duration / 60) : null);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(null);
+    };
+    video.src = objectUrl;
+  });
+
 type MaterialEditor = {
   id?: number;
   title: string;
@@ -638,7 +654,17 @@ export default function CourseReviewPage() {
                       <input
                         type="file"
                         accept={materialEditor.type === "video" ? "video/*" : "application/pdf"}
-                        onChange={(event) => setMaterialEditor((current) => current && { ...current, file: event.target.files?.[0] || null })}
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] || null;
+                          const detectedDuration = file && materialEditor.type === "video"
+                            ? await readVideoDurationMinutes(file)
+                            : null;
+                          setMaterialEditor((current) => current && {
+                            ...current,
+                            file,
+                            duration: current.duration || (detectedDuration ? String(detectedDuration) : ""),
+                          });
+                        }}
                         className="mt-1 block w-full text-sm text-gray-600"
                         required
                       />
