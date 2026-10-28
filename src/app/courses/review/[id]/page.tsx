@@ -49,6 +49,7 @@ type MaterialEditor = {
   type: "video" | "pdf" | "link";
   source: "upload" | "oneDrive";
   oneDriveUrl: string;
+  useConnectedMicrosoftAccount: boolean;
   resourceUrl: string;
   duration: string;
   order: string;
@@ -62,6 +63,7 @@ const emptyMaterialEditor = (order = 0): MaterialEditor => ({
   type: "video",
   source: "upload",
   oneDriveUrl: "",
+  useConnectedMicrosoftAccount: false,
   resourceUrl: "",
   duration: "",
   order: String(order),
@@ -89,12 +91,35 @@ export default function CourseReviewPage() {
   const [materialEditor, setMaterialEditor] = useState<MaterialEditor | null>(null);
   const [isMaterialSaving, setIsMaterialSaving] = useState(false);
   const [materialUploadProgress, setMaterialUploadProgress] = useState<number | null>(null);
+  const [microsoftConnection, setMicrosoftConnection] = useState<{ configured: boolean; connected: boolean; email?: string | null } | null>(null);
 
   useEffect(() => {
     if (courseId) {
       loadCourseDetails();
+      loadMicrosoftConnection();
     }
   }, [courseId]);
+
+  const loadMicrosoftConnection = async () => {
+    const response = await adminService.getMicrosoftDriveConnection();
+    if (response.success && response.data) {
+      setMicrosoftConnection({
+        configured: response.data.configured,
+        connected: response.data.connection.connected,
+        email: response.data.connection.email,
+      });
+    }
+  };
+
+  const connectMicrosoftAccount = async () => {
+    setActionError(null);
+    const response = await adminService.getMicrosoftDriveAuthorizationUrl();
+    if (!response.success || !response.data?.authorizationUrl) {
+      setActionError(response.message || "Unable to start Microsoft sign-in.");
+      return;
+    }
+    window.location.assign(response.data.authorizationUrl);
+  };
 
   const loadCourseDetails = async () => {
     try {
@@ -189,6 +214,7 @@ export default function CourseReviewPage() {
       type: content.type,
       source: "upload",
       oneDriveUrl: "",
+      useConnectedMicrosoftAccount: false,
       resourceUrl: content.type === "link" ? content.url || "" : "",
       duration: content.duration ? String(content.duration) : "",
       order: String(content.order),
@@ -263,6 +289,7 @@ export default function CourseReviewPage() {
           duration,
           order,
           isPreview: materialEditor.isPreview,
+          useConnectedMicrosoftAccount: materialEditor.useConnectedMicrosoftAccount,
         });
       } else if (materialEditor.type === "video") {
         response = await adminService.uploadCourseVideo(
@@ -645,8 +672,32 @@ export default function CourseReviewPage() {
                         required
                       />
                       <span className="mt-1 block text-xs font-normal text-gray-500">
-                        Use Share &gt; Copy link on the MP4 itself — do not paste a Stream player URL (stream.aspx). The link must allow anyone with the link to download; UniHub transfers it server-side and removes the temporary copy after YouTube upload.
+                        For public import, use Share &gt; Copy link on the MP4 itself and allow downloads. For a private SLIIT Stream URL, enable the connected Microsoft account option below.
                       </span>
+                      <label className="mt-3 flex items-start gap-2 text-sm font-normal text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={materialEditor.useConnectedMicrosoftAccount}
+                          onChange={(event) => setMaterialEditor((current) => current && { ...current, useConnectedMicrosoftAccount: event.target.checked })}
+                          className="mt-0.5"
+                        />
+                        <span>
+                          <span className="font-medium">Use my connected Microsoft account</span>
+                          <span className="mt-0.5 block text-xs text-gray-500">
+                            Use this for private SLIIT SharePoint recordings. {microsoftConnection?.connected ? `Connected as ${microsoftConnection.email || "Microsoft account"}.` : ""}
+                          </span>
+                        </span>
+                      </label>
+                      {materialEditor.useConnectedMicrosoftAccount && !microsoftConnection?.connected && (
+                        <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+                          {microsoftConnection?.configured === false ? "Microsoft sign-in has not been configured on the server." : "Connect the SLIIT Microsoft account that can access this recording before importing."}
+                          {microsoftConnection?.configured !== false && (
+                            <button type="button" onClick={connectMicrosoftAccount} className="ml-2 font-semibold underline">
+                              Connect Microsoft account
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </label>
                   ) : !materialEditor.id && (
                     <label className="text-sm font-medium text-gray-700">

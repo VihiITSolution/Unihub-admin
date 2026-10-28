@@ -425,6 +425,7 @@ export const adminService = {
       duration?: number;
       order: number;
       isPreview: boolean;
+      useConnectedMicrosoftAccount?: boolean;
     },
   ): Promise<ApiResponse<{ content: CourseContent }>> {
     try {
@@ -514,6 +515,7 @@ export const adminService = {
       duration?: number;
       order: number;
       isPreview: boolean;
+      useConnectedMicrosoftAccount?: boolean;
     },
   ): Promise<ApiResponse<{ content: CourseContent }>> {
     try {
@@ -528,6 +530,25 @@ export const adminService = {
         success: false,
         message: error.response?.data?.message || "Failed to import the OneDrive video",
       };
+    }
+  },
+
+  /** Add a public support resource without copying it to UniHub storage. */
+  async getMicrosoftDriveConnection(): Promise<ApiResponse<MicrosoftDriveConnectionStatus>> {
+    try {
+      const response = await apiClient.get<ApiResponse<MicrosoftDriveConnectionStatus>>("/admin/microsoft-drive");
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Unable to check the Microsoft connection" };
+    }
+  },
+
+  async getMicrosoftDriveAuthorizationUrl(): Promise<ApiResponse<{ authorizationUrl: string }>> {
+    try {
+      const response = await apiClient.post<ApiResponse<{ authorizationUrl: string }>>("/admin/microsoft-drive/authorize");
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Unable to start Microsoft sign-in" };
     }
   },
 
@@ -1217,6 +1238,11 @@ export interface YouTubeRightsDeclaration {
   acceptedIp?: string;
   acceptedUserAgent?: string;
   createdAt: string;
+}
+
+export interface MicrosoftDriveConnectionStatus {
+  configured: boolean;
+  connection: { connected: boolean; email?: string | null; displayName?: string | null; connectedAt?: string };
 }
 
 export interface CourseDetails {
