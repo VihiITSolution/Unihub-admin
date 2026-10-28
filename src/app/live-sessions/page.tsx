@@ -116,6 +116,35 @@ export default function LiveSessionsAdminPage() {
     })();
   };
 
+  const editRecording = () => {
+    if (!selected) return;
+    const title = prompt("Recording title:", selected.title);
+    if (!title?.trim()) return;
+    const description = prompt("Recording description:", selected.description || "");
+    if (description === null) return;
+    const tags = prompt("Categories (separate with commas):", (selected.tags || []).join(", "));
+    if (tags === null) return;
+    run(
+      () => adminLiveSessionService.updateRecording(selected.id, {
+        title: title.trim(), description,
+        tags: tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      }),
+      "Recording details updated.",
+    );
+  };
+
+  const addRecordingToCourse = () => {
+    if (!selected) return;
+    const courseId = Number(prompt("Course ID for the tutor's course:"));
+    if (!Number.isInteger(courseId) || courseId < 1) return setError("Enter a valid course ID.");
+    const title = prompt("Lesson title:", selected.title);
+    if (title === null) return;
+    run(
+      () => adminLiveSessionService.addRecordingToCourse(selected.id, { courseId, title: title.trim() || selected.title }),
+      "Recording uploaded to the course as a video lesson.",
+    );
+  };
+
   const days: Date[] = [];
   for (let date = new Date(range.gridStart); date < range.gridEnd; date.setUTCDate(date.getUTCDate() + 1)) days.push(new Date(date));
   const dayEvents = (day: Date) => events.filter((event) => {
@@ -187,7 +216,7 @@ export default function LiveSessionsAdminPage() {
           {selected.approvalStatus === "approved" && <><button disabled={processing} onClick={() => run(() => adminLiveSessionService.action(selected.id, "sync-attendees"), "Attendee sync queued.")} className="rounded border px-4 py-2">Sync attendees</button><button disabled={processing} onClick={() => run(() => adminLiveSessionService.action(selected.id, "sync-artifacts"), "Artifact sync queued.")} className="rounded border px-4 py-2">Sync attendance/recording</button></>}
           {selected.status === "scheduled" && <button disabled={processing} onClick={reschedule} className="rounded border px-4 py-2">Reschedule</button>}
           {!["cancelled","ended","recorded"].includes(selected.status) && <button disabled={processing} onClick={() => confirm("Cancel this session and its Teams calendar event?") && run(() => adminLiveSessionService.cancel(selected.id), "Session cancelled.")} className="rounded border border-red-300 px-4 py-2 text-red-700">Cancel</button>}
-          {selected.recordingUrl && <button disabled={processing} onClick={() => confirm("Permanently delete this recording from OneDrive? This cannot be undone.") && run(() => adminLiveSessionService.removeRecording(selected.id), "Recording removed.")} className="rounded bg-red-700 px-4 py-2 text-white">Delete recording</button>}
+          {selected.recordingUrl && <><button disabled={processing} onClick={editRecording} className="rounded border border-indigo-300 px-4 py-2 text-indigo-700">Edit recording</button><button disabled={processing} onClick={addRecordingToCourse} className="rounded bg-indigo-600 px-4 py-2 text-white">Add recording to course</button><button disabled={processing} onClick={() => confirm("Permanently delete this recording from OneDrive? This cannot be undone.") && run(() => adminLiveSessionService.removeRecording(selected.id), "Recording removed.")} className="rounded bg-red-700 px-4 py-2 text-white">Delete recording</button></>}
           <button disabled={processing} onClick={() => setDeleteConfirm(selected)} className="rounded bg-red-700 px-4 py-2 text-white">Delete session</button>
         </div>
         <div className="mt-6"><h3 className="font-semibold">Enrollments and Teams attendance</h3><div className="mt-2 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Student</th><th className="p-2">Attendance</th><th className="p-2">Duration</th><th className="p-2">Sync</th></tr></thead><tbody>{(selected.enrollments || []).map((item: any) => <tr key={item.id} className="border-b"><td className="p-2">{item.student?.firstName} {item.student?.lastName}<div className="text-xs text-gray-500">{item.student?.email}</div></td><td className="p-2">{item.attended ? "Attended" : "Not recorded"}</td><td className="p-2">{item.attendanceDuration || 0} min</td><td className="p-2">{item.attendanceSource || "unihub"} / {item.attendanceSyncStatus || "pending"}</td></tr>)}</tbody></table></div></div>

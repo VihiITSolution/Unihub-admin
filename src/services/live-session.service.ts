@@ -17,6 +17,7 @@ export interface AdminLiveSession {
   rejectionReason?: string;
   allowRecording: boolean;
   recordingUrl?: string;
+  tags?: string[];
   totalAttendees: number;
   tutor?: { id: number; firstName: string; lastName: string; email: string; tutorProfile?: { teamsEmail?: string } };
   meeting?: {
@@ -95,5 +96,13 @@ export const adminLiveSessionService = {
   async removeRecording(id: number): Promise<ApiResponse<any>> {
     try { return (await apiClient.delete(`/admin/live-sessions/${id}/recording`)).data; }
     catch (error: any) { return { success: false, message: message(error, "Failed to remove recording") }; }
+  },
+  async updateRecording(id: number, changes: { title: string; description?: string; tags?: string[] }): Promise<ApiResponse<any>> {
+    try { return (await apiClient.put(`/live-sessions/${id}/recording`, changes)).data; }
+    catch (error: any) { return { success: false, message: message(error, "Failed to update recording") }; }
+  },
+  async addRecordingToCourse(id: number, data: { courseId: number; title?: string; isPreview?: boolean }): Promise<ApiResponse<any>> {
+    try { return (await apiClient.post(`/live-sessions/${id}/recording/course-content`, data)).data; }
+    catch (error: any) { return { success: false, message: message(error, "Failed to add recording to course") }; }
   },
 };
