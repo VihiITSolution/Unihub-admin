@@ -139,6 +139,7 @@ export default function LiveSessionsAdminPage() {
         ].map(([label, value]) => <Card key={String(label)}><p className="text-sm text-gray-500">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></Card>)}
       </div>
       {health && !health.healthy && <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Teams is disabled or unhealthy: {health.message || "check app credentials, organizer mailbox, and OneDrive permissions"}</div>}
+      {health?.healthy && health.recordingStorageAvailable === false && <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Teams calendar is ready for approvals. Recording storage is not ready yet: {health.storageWarning || "set up the organizer’s OneDrive before recording sessions"}</div>}
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setView("queue")} className={`rounded-lg px-4 py-2 ${view === "queue" ? "bg-indigo-600 text-white" : "bg-gray-100"}`}>Operational list</button>
         <button onClick={() => setView("calendar")} className={`rounded-lg px-4 py-2 ${view === "calendar" ? "bg-indigo-600 text-white" : "bg-gray-100"}`}>Calendar</button>
