@@ -60,6 +60,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       path: "/users",
     },
     {
+      name: "Administrators",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15.5a4 4 0 100-8 4 4 0 000 8zm-7 5a7 7 0 0114 0M19 8v6m3-3h-6" />
+        </svg>
+      ),
+      path: "/administrators",
+    },
+    {
       name: "Notifications",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,7 +320,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   ];
 
   const menuGroups = [
-    { label: 'Overview', paths: ['/', '/users', '/notifications', '/affiliate'] },
+    { label: 'Overview', paths: ['/', '/users', '/administrators', '/notifications', '/affiliate'] },
     { label: 'Learning', paths: ['/universities', '/faculties', '/courses', '/courses/pending', '/tutors/pending', '/tutors', '/live-sessions'] },
     { label: 'Operations', paths: ['/marketplace', '/marketplace/bank-transfers', '/boarding', '/messages', '/support'] },
     { label: 'Trust & settings', paths: ['/moderation/conversations', '/moderation/blocked-messages', '/suggestions', '/audit-logs', '/analytics', '/settings'] },

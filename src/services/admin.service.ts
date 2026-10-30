@@ -181,6 +181,31 @@ export interface UserFilters {
   limit?: number;
 }
 
+export type LiveSessionNotificationEvent =
+  | "request_submitted"
+  | "approval_updated"
+  | "provisioning_failed"
+  | "schedule_changed"
+  | "cancelled";
+
+export interface LiveSessionNotificationSettings {
+  emailEnabled: boolean;
+  events: Record<LiveSessionNotificationEvent, boolean>;
+}
+
+export interface Administrator {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  roles: string[];
+  primaryRole: string;
+  isActive: boolean;
+  notificationPrefs?: { adminLiveSessions?: LiveSessionNotificationSettings } | null;
+  createdAt: string;
+  lastLogin?: string;
+}
+
 export interface CourseFilters {
   isPublished?: boolean;
   approvalStatus?: string;
@@ -396,6 +421,33 @@ export const adminService = {
         success: false,
         message: error.response?.data?.message || "Failed to load user details",
       };
+    }
+  },
+
+  async getAdministrators(): Promise<ApiResponse<{ administrators: Administrator[]; liveSessionEvents: LiveSessionNotificationEvent[] }>> {
+    try {
+      const response = await apiClient.get<ApiResponse<{ administrators: Administrator[]; liveSessionEvents: LiveSessionNotificationEvent[] }>>("/admin/administrators");
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to load administrators." };
+    }
+  },
+
+  async addAdministrator(email: string): Promise<ApiResponse<{ administrator: Administrator }>> {
+    try {
+      const response = await apiClient.post<ApiResponse<{ administrator: Administrator }>>("/admin/administrators", { email });
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to grant administrator access." };
+    }
+  },
+
+  async updateAdministrator(id: number, changes: { isActive?: boolean; hasAdminAccess?: boolean; liveSessionNotifications?: LiveSessionNotificationSettings }): Promise<ApiResponse<{ administrator: Administrator }>> {
+    try {
+      const response = await apiClient.put<ApiResponse<{ administrator: Administrator }>>(`/admin/administrators/${id}`, changes);
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Failed to update administrator." };
     }
   },
 
