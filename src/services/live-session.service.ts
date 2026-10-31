@@ -69,6 +69,10 @@ export const adminLiveSessionService = {
     try { return (await apiClient.get(`/admin/live-sessions/${id}`)).data; }
     catch (error: any) { return { success: false, message: message(error, "Failed to load session") }; }
   },
+  async join(id: number): Promise<ApiResponse<{ joinUrl: string }>> {
+    try { return (await apiClient.post(`/admin/live-sessions/${id}/join`)).data; }
+    catch (error: any) { return { success: false, message: message(error, "Unable to join this live session") }; }
+  },
   async approve(id: number): Promise<ApiResponse<any>> {
     try { return (await apiClient.post(`/admin/live-sessions/${id}/approve`)).data; }
     catch (error: any) { return { success: false, message: message(error, "Failed to approve session") }; }

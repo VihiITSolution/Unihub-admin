@@ -70,6 +70,15 @@ export default function LiveSessionsAdminPage() {
     setProcessing(false);
   };
 
+  const joinTeams = async (session: AdminLiveSession) => {
+    setProcessing(true); setError(null); setNotice(null);
+    const response = await adminLiveSessionService.join(session.id);
+    if (response.success && response.data?.joinUrl) {
+      window.open(response.data.joinUrl, "_blank", "noopener,noreferrer");
+    } else setError(response.message || "Unable to open Microsoft Teams for this session.");
+    setProcessing(false);
+  };
+
   const reject = () => {
     if (!selected) return;
     const reason = prompt("Reason the tutor must address:");
@@ -188,7 +197,7 @@ export default function LiveSessionsAdminPage() {
                 <td className="p-3">{new Date(session.scheduledStartTime).toLocaleString("en-LK", { timeZone: TZ })}</td>
                 <td className="p-3"><span className={`rounded-full px-2 py-1 text-xs ${badge[session.approvalStatus] || "bg-gray-100"}`}>{session.approvalStatus}</span></td>
                 <td className="p-3"><span className={`rounded-full px-2 py-1 text-xs ${badge[session.providerStatus] || "bg-gray-100"}`}>{session.providerStatus}</span>{session.meeting?.lastError && <div className="mt-1 max-w-xs text-xs text-red-600">{session.meeting.lastError}</div>}</td>
-                <td className="p-3"><div className="flex flex-wrap gap-2"><button onClick={() => open(session.id)} className="rounded bg-gray-100 px-3 py-1.5 hover:bg-gray-200">Manage</button><button disabled={processing} onClick={() => setDeleteConfirm(session)} className="rounded bg-red-700 px-3 py-1.5 text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60">Delete</button></div></td>
+                <td className="p-3"><div className="flex flex-wrap gap-2"><button onClick={() => open(session.id)} className="rounded bg-gray-100 px-3 py-1.5 hover:bg-gray-200">Manage</button>{session.provider === "teams" && session.approvalStatus === "approved" && session.providerStatus === "ready" && ["scheduled", "live"].includes(session.status) && <button disabled={processing} onClick={() => joinTeams(session)} className="rounded bg-green-600 px-3 py-1.5 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60">Join Teams</button>}<button disabled={processing} onClick={() => setDeleteConfirm(session)} className="rounded bg-red-700 px-3 py-1.5 text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60">Delete</button></div></td>
               </tr>)}</tbody>
             </table>
             {sessions.length === 0 && <div className="py-12 text-center text-gray-500">No sessions match these filters.</div>}
@@ -209,6 +218,7 @@ export default function LiveSessionsAdminPage() {
         <div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="rounded-lg bg-gray-50 p-4"><p className="text-xs text-gray-500">Schedule</p><p>{new Date(selected.scheduledStartTime).toLocaleString("en-LK", { timeZone: TZ })}</p><p>{new Date(selected.scheduledEndTime).toLocaleString("en-LK", { timeZone: TZ })}</p></div><div className="rounded-lg bg-gray-50 p-4"><p className="text-xs text-gray-500">Provider health</p><p>{selected.providerStatus} · {selected.meeting?.syncStatus || "no meeting"}</p><p className="text-sm text-red-600">{selected.meeting?.lastError}</p></div></div>
         {selected.rejectionReason && <div className="mt-4 rounded bg-red-50 p-3 text-red-700">{selected.rejectionReason}</div>}
         <div className="mt-5 flex flex-wrap gap-2">
+          {selected.provider === "teams" && selected.approvalStatus === "approved" && selected.providerStatus === "ready" && ["scheduled", "live"].includes(selected.status) && <button disabled={processing} onClick={() => joinTeams(selected)} className="rounded bg-green-600 px-4 py-2 text-white disabled:opacity-60">Join Teams</button>}
           {selected.approvalStatus !== "approved" && <button disabled={processing} onClick={() => run(() => adminLiveSessionService.approve(selected.id), "Session approved and provisioning queued.")} className="rounded bg-green-600 px-4 py-2 text-white">Approve</button>}
           {selected.approvalStatus === "pending" && <button disabled={processing} onClick={reject} className="rounded bg-red-600 px-4 py-2 text-white">Reject</button>}
           {selected.providerStatus === "failed" && <button disabled={processing} onClick={() => run(() => adminLiveSessionService.action(selected.id, "retry"), "Provisioning retry queued.")} className="rounded bg-blue-600 px-4 py-2 text-white">Retry provisioning</button>}
