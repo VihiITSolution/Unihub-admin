@@ -96,4 +96,7 @@ jobs:
             done
 
             docker ps --filter name=unihub-admin --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
-            docker image prune -a -f
+            # Cleanup is optional. Another deployment can already be pruning
+            # images on this shared host; do not report a healthy deployment as
+            # failed merely because Docker permits only one prune at a time.
+            docker image prune -a -f || echo "Image cleanup skipped because another Docker prune is running"
