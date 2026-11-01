@@ -58,6 +58,13 @@ type MaterialEditor = {
   file: File | null;
 };
 
+type QueuedMaterial = MaterialEditor & {
+  queueId: string;
+  uploadState: "ready" | "uploading" | "error";
+  uploadProgress: number | null;
+  error?: string;
+};
+
 const emptyMaterialEditor = (order = 0): MaterialEditor => ({
   title: "",
   type: "video",
@@ -89,8 +96,10 @@ export default function CourseReviewPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [materialEditor, setMaterialEditor] = useState<MaterialEditor | null>(null);
+  const [queuedMaterials, setQueuedMaterials] = useState<QueuedMaterial[]>([]);
   const [isMaterialSaving, setIsMaterialSaving] = useState(false);
   const [materialUploadProgress, setMaterialUploadProgress] = useState<number | null>(null);
+  const [queueProgress, setQueueProgress] = useState<{ current: number; total: number } | null>(null);
   const [microsoftConnection, setMicrosoftConnection] = useState<{ configured: boolean; connected: boolean; email?: string | null } | null>(null);
 
   useEffect(() => {
@@ -199,10 +208,27 @@ export default function CourseReviewPage() {
     }
   };
 
-  const openNewMaterialEditor = () => {
+  const addMaterialToQueue = () => {
     setActionError(null);
-    setMaterialUploadProgress(null);
-    setMaterialEditor(emptyMaterialEditor(courseDetails?.courseContent.length || 0));
+    setQueuedMaterials((current) => [
+      ...current,
+      {
+        ...emptyMaterialEditor((courseDetails?.courseContent.length || 0) + current.length),
+        queueId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        uploadState: "ready",
+        uploadProgress: null,
+      },
+    ]);
+  };
+
+  const updateQueuedMaterial = (queueId: string, updates: Partial<QueuedMaterial>) => {
+    setQueuedMaterials((current) => current.map((material) => (
+      material.queueId === queueId ? { ...material, ...updates } : material
+    )));
+  };
+
+  const removeQueuedMaterial = (queueId: string) => {
+    setQueuedMaterials((current) => current.filter((material) => material.queueId !== queueId));
   };
 
   const openMaterialEditor = (content: CourseContent) => {
@@ -324,6 +350,109 @@ export default function CourseReviewPage() {
     } catch {
       setActionError("Unable to save the course material.");
     } finally {
+      setIsMaterialSaving(false);
+    }
+  };
+
+  const validateQueuedMaterial = (material: QueuedMaterial): string | null => {
+    if (!material.title.trim()) return "A material title is required.";
+    const order = Number(material.order);
+    if (!Number.isInteger(order) || order < 0) return "Display order must be zero or a positive whole number.";
+    const duration = material.duration ? Number(material.duration) : undefined;
+    if (duration !== undefined && (!Number.isInteger(duration) || duration <= 0)) {
+      return "Duration must be a positive whole number of minutes.";
+    }
+    if (material.type !== "link" && material.source === "upload" && !material.file) {
+      return "Select the video or PDF file supplied by the tutor.";
+    }
+    if (material.type === "link" && !material.resourceUrl.trim()) return "Enter a public support-material link.";
+    if (material.source === "oneDrive" && !material.oneDriveUrl.trim()) return "Enter the tutor's public OneDrive sharing link.";
+    if (material.source === "oneDrive" && isSharePointStreamPlayerUrl(material.oneDriveUrl.trim())) {
+      return "Use Share > Copy link on the MP4 file instead of a SharePoint Stream player URL.";
+    }
+    return null;
+  };
+
+  const uploadQueuedMaterials = async () => {
+    if (!queuedMaterials.length) return;
+
+    const invalidMaterial = queuedMaterials.find((material) => validateQueuedMaterial(material));
+    if (invalidMaterial) {
+      const validationError = validateQueuedMaterial(invalidMaterial)!;
+      updateQueuedMaterial(invalidMaterial.queueId, { error: validationError, uploadState: "error" });
+      setActionError(`Fix “${invalidMaterial.title || "untitled material"}” before starting the upload.`);
+      return;
+    }
+
+    const materialsToUpload = [...queuedMaterials];
+    const successfulQueueIds: string[] = [];
+    let failedCount = 0;
+
+    try {
+      setIsMaterialSaving(true);
+      setActionError(null);
+      setQueueProgress({ current: 0, total: materialsToUpload.length });
+
+      for (const [index, material] of materialsToUpload.entries()) {
+        setQueueProgress({ current: index + 1, total: materialsToUpload.length });
+        updateQueuedMaterial(material.queueId, { uploadState: "uploading", uploadProgress: 0, error: undefined });
+
+        const title = material.title.trim();
+        const order = Number(material.order);
+        const duration = material.duration ? Number(material.duration) : undefined;
+        try {
+          let response;
+
+          if (material.type === "link") {
+            response = await adminService.addCourseSupportLink(courseId, {
+              title, url: material.resourceUrl.trim(), duration, order, isPreview: material.isPreview,
+            });
+          } else if (material.type === "video" && material.source === "oneDrive") {
+            response = await adminService.importCourseVideoFromOneDrive(courseId, {
+              title, oneDriveUrl: material.oneDriveUrl.trim(), duration, order,
+              isPreview: material.isPreview, useConnectedMicrosoftAccount: material.useConnectedMicrosoftAccount,
+            });
+          } else if (material.type === "video") {
+            response = await adminService.uploadCourseVideo(courseId, {
+              title, file: material.file!, duration, order, isPreview: material.isPreview,
+            }, (uploadProgress) => updateQueuedMaterial(material.queueId, { uploadProgress }));
+          } else {
+            response = await adminService.uploadCourseDocument(courseId, {
+              title, file: material.file!, duration, order, isPreview: material.isPreview,
+            });
+          }
+
+          if (response.success) {
+            successfulQueueIds.push(material.queueId);
+            continue;
+          }
+          failedCount += 1;
+          updateQueuedMaterial(material.queueId, {
+            uploadState: "error",
+            uploadProgress: null,
+            error: response.message || "Unable to upload this material.",
+          });
+        } catch {
+          failedCount += 1;
+          updateQueuedMaterial(material.queueId, {
+            uploadState: "error",
+            uploadProgress: null,
+            error: "Unable to upload this material. Please try again.",
+          });
+        }
+      }
+
+      if (successfulQueueIds.length) {
+        setQueuedMaterials((current) => current.filter((material) => !successfulQueueIds.includes(material.queueId)));
+        await loadCourseDetails();
+      }
+      if (failedCount) {
+        setActionError(`${successfulQueueIds.length} material${successfulQueueIds.length === 1 ? "" : "s"} uploaded. ${failedCount} failed and remain in the queue.`);
+      }
+    } catch {
+      setActionError("The upload queue stopped unexpectedly. Any unfinished materials remain in the queue.");
+    } finally {
+      setQueueProgress(null);
       setIsMaterialSaving(false);
     }
   };
@@ -555,13 +684,185 @@ export default function CourseReviewPage() {
               </div>
               <button
                 type="button"
-                onClick={openNewMaterialEditor}
+                onClick={addMaterialToQueue}
                 disabled={isMaterialSaving}
                 className="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
               >
                 + Add material
               </button>
             </div>
+
+            {queuedMaterials.length > 0 && (
+              <section className="mb-5 space-y-4 rounded-lg border border-primary-200 bg-primary-50 p-4" aria-label="Material upload queue">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Materials waiting to upload ({queuedMaterials.length})</h4>
+                    <p className="mt-1 text-sm text-gray-600">Add every material first, then upload them safely one at a time in display-order sequence.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={uploadQueuedMaterials}
+                    disabled={isMaterialSaving}
+                    className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+                  >
+                    {isMaterialSaving && queueProgress
+                      ? `Uploading ${queueProgress.current} of ${queueProgress.total}…`
+                      : `Upload ${queuedMaterials.length} material${queuedMaterials.length === 1 ? "" : "s"}`}
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {queuedMaterials.map((material, index) => (
+                    <div key={material.queueId} className="rounded-lg border border-gray-200 bg-white p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <h5 className="font-medium text-gray-900">Material {index + 1}</h5>
+                        <button
+                          type="button"
+                          onClick={() => removeQueuedMaterial(material.queueId)}
+                          disabled={isMaterialSaving}
+                          className="text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                          Material title
+                          <input
+                            value={material.title}
+                            onChange={(event) => updateQueuedMaterial(material.queueId, { title: event.target.value, error: undefined, uploadState: "ready" })}
+                            disabled={isMaterialSaving}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                            required
+                          />
+                        </label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Type
+                          <select
+                            value={material.type}
+                            disabled={isMaterialSaving}
+                            onChange={(event) => updateQueuedMaterial(material.queueId, {
+                              type: event.target.value as "video" | "pdf" | "link", file: null, oneDriveUrl: "", resourceUrl: "", error: undefined, uploadState: "ready",
+                            })}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                          >
+                            <option value="video">Video lesson</option>
+                            <option value="pdf">PDF resource</option>
+                            <option value="link">Public support link</option>
+                          </select>
+                        </label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Duration (minutes)
+                          <input
+                            type="number"
+                            min="1"
+                            value={material.duration}
+                            disabled={isMaterialSaving}
+                            onChange={(event) => updateQueuedMaterial(material.queueId, { duration: event.target.value, error: undefined, uploadState: "ready" })}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                          />
+                        </label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Display order
+                          <input
+                            type="number"
+                            min="0"
+                            value={material.order}
+                            disabled={isMaterialSaving}
+                            onChange={(event) => updateQueuedMaterial(material.queueId, { order: event.target.value, error: undefined, uploadState: "ready" })}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                            required
+                          />
+                        </label>
+                        {material.type === "video" && (
+                          <fieldset className="text-sm font-medium text-gray-700">
+                            <legend>Video source</legend>
+                            <div className="mt-2 flex flex-wrap gap-4">
+                              <label className="flex items-center gap-2">
+                                <input type="radio" checked={material.source === "upload"} disabled={isMaterialSaving} onChange={() => updateQueuedMaterial(material.queueId, { source: "upload", oneDriveUrl: "", error: undefined, uploadState: "ready" })} />
+                                Upload a file
+                              </label>
+                              <label className="flex items-center gap-2">
+                                <input type="radio" checked={material.source === "oneDrive"} disabled={isMaterialSaving} onChange={() => updateQueuedMaterial(material.queueId, { source: "oneDrive", file: null, error: undefined, uploadState: "ready" })} />
+                                Import from OneDrive
+                              </label>
+                            </div>
+                          </fieldset>
+                        )}
+                        {material.type === "link" ? (
+                          <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                            Public resource link
+                            <input
+                              type="url"
+                              value={material.resourceUrl}
+                              disabled={isMaterialSaving}
+                              onChange={(event) => updateQueuedMaterial(material.queueId, { resourceUrl: event.target.value, error: undefined, uploadState: "ready" })}
+                              placeholder="https://www.youtube.com/watch?v=... or another public resource"
+                              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                              required
+                            />
+                          </label>
+                        ) : material.type === "video" && material.source === "oneDrive" ? (
+                          <div className="text-sm font-medium text-gray-700 sm:col-span-2">
+                            <label htmlFor={`one-drive-link-${material.queueId}`}>Public OneDrive sharing link</label>
+                            <input
+                              id={`one-drive-link-${material.queueId}`}
+                              type="url"
+                              value={material.oneDriveUrl}
+                              disabled={isMaterialSaving}
+                              onChange={(event) => updateQueuedMaterial(material.queueId, { oneDriveUrl: event.target.value, error: undefined, uploadState: "ready" })}
+                              placeholder="Share > Copy link from the MP4 file"
+                              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                              required
+                            />
+                            <label className="mt-3 flex items-start gap-2 text-sm font-normal text-gray-700">
+                              <input type="checkbox" checked={material.useConnectedMicrosoftAccount} disabled={isMaterialSaving} onChange={(event) => updateQueuedMaterial(material.queueId, { useConnectedMicrosoftAccount: event.target.checked })} className="mt-0.5" />
+                              <span><span className="font-medium">Use my connected Microsoft account</span><span className="mt-0.5 block text-xs text-gray-500">Use this for private SLIIT SharePoint recordings. {microsoftConnection?.connected ? `Connected as ${microsoftConnection.email || "Microsoft account"}.` : ""}</span></span>
+                            </label>
+                            {material.useConnectedMicrosoftAccount && !microsoftConnection?.connected && (
+                              <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+                                {microsoftConnection?.configured === false ? "Microsoft sign-in has not been configured on the server." : "Connect the SLIIT Microsoft account that can access this recording before importing."}
+                                {microsoftConnection?.configured !== false && <button type="button" onClick={connectMicrosoftAccount} className="ml-2 font-semibold underline">Connect Microsoft account</button>}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <label className="text-sm font-medium text-gray-700 sm:col-span-2">
+                            {material.type === "video" ? "Video file" : "PDF file"}
+                            <input
+                              type="file"
+                              accept={material.type === "video" ? "video/*" : "application/pdf"}
+                              disabled={isMaterialSaving}
+                              onChange={async (event) => {
+                                const file = event.target.files?.[0] || null;
+                                const detectedDuration = file && material.type === "video" ? await readVideoDurationMinutes(file) : null;
+                                updateQueuedMaterial(material.queueId, {
+                                  file,
+                                  duration: material.duration || (detectedDuration ? String(detectedDuration) : ""),
+                                  error: undefined,
+                                  uploadState: "ready",
+                                });
+                              }}
+                              className="mt-1 block w-full text-sm text-gray-600 disabled:opacity-50"
+                              required
+                            />
+                          </label>
+                        )}
+                      </div>
+                      <label className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                        <input type="checkbox" checked={material.isPreview} disabled={isMaterialSaving} onChange={(event) => updateQueuedMaterial(material.queueId, { isPreview: event.target.checked })} />
+                        Free preview
+                      </label>
+                      {material.uploadState === "uploading" && (
+                        <p className="mt-3 text-sm text-primary-700">Uploading{material.uploadProgress !== null ? `: ${material.uploadProgress}%` : "…"}</p>
+                      )}
+                      {material.error && <p className="mt-3 text-sm text-red-600">{material.error}</p>}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500">Videos upload in small chunks for reliability. The queue uploads each material in turn, so large files do not compete with one another.</p>
+              </section>
+            )}
 
             {materialEditor && (
               <form onSubmit={saveMaterial} className="mb-5 space-y-4 rounded-lg border border-primary-200 bg-primary-50 p-4">
