@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminNotificationBell from '@/components/notifications/AdminNotificationBell';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -27,6 +28,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
+          <ThemeToggle />
           <AdminNotificationBell />
           <div className="flex items-center gap-2 border-l border-slate-200 pl-3 sm:pl-4">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">{initials || 'A'}</div>
