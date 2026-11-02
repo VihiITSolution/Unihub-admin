@@ -83,6 +83,14 @@ export default function AdministratorsPage() {
     setWorkingId(null);
   };
 
+  const sendTestEmail = async (administrator: Administrator) => {
+    setWorkingId(administrator.id); setNotice(""); setError("");
+    const result = await adminService.sendAdministratorNotificationTest(administrator.id);
+    if (result.success) setNotice(result.message || `Test email sent to ${administrator.email}.`);
+    else setError(result.message || "Unable to send the test email.");
+    setWorkingId(null);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -123,6 +131,7 @@ export default function AdministratorsPage() {
                     <div className="flex flex-wrap gap-2">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${administrator.isActive ? "bg-green-100 text-green-800" : "bg-gray-200 text-gray-700"}`}>{administrator.isActive ? "Active" : "Suspended"}</span>
                       <button type="button" disabled={working} onClick={() => update(administrator, { isActive: !administrator.isActive }, `Administrator ${administrator.isActive ? "suspended" : "activated"}.`)} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">{administrator.isActive ? "Suspend" : "Activate"}</button>
+                      <button type="button" disabled={working || !administrator.isActive} onClick={() => sendTestEmail(administrator)} className="rounded-lg border border-primary-200 px-3 py-1.5 text-sm font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50">{working ? "Sending…" : "Send test email"}</button>
                       <button type="button" disabled={working} onClick={() => { if (window.confirm(`Remove administrator access for ${administrator.email}?`)) update(administrator, { hasAdminAccess: false }, "Administrator access removed."); }} className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">Remove access</button>
                     </div>
                   </div>

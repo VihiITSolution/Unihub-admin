@@ -451,6 +451,15 @@ export const adminService = {
     }
   },
 
+  async sendAdministratorNotificationTest(id: number): Promise<ApiResponse<null>> {
+    try {
+      const response = await apiClient.post<ApiResponse<null>>(`/admin/administrators/${id}/test-email`);
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || "Unable to send the test email." };
+    }
+  },
+
   /**
    * Permanently remove a course and its non-financial dependent records
    */
