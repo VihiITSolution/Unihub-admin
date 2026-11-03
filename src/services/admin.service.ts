@@ -193,6 +193,13 @@ export interface LiveSessionNotificationSettings {
   events: Record<LiveSessionNotificationEvent, boolean>;
 }
 
+export type ApprovalNotificationEvent = "course" | "tutor" | "marketplace" | "boarding" | "bank_transfer" | "affiliate_referral" | "affiliate_payout";
+
+export interface ApprovalNotificationSettings {
+  emailEnabled: boolean;
+  events: Record<ApprovalNotificationEvent, boolean>;
+}
+
 export interface Administrator {
   id: number;
   firstName: string;
@@ -201,7 +208,7 @@ export interface Administrator {
   roles: string[];
   primaryRole: string;
   isActive: boolean;
-  notificationPrefs?: { adminLiveSessions?: LiveSessionNotificationSettings } | null;
+  notificationPrefs?: { adminLiveSessions?: LiveSessionNotificationSettings; adminApprovals?: ApprovalNotificationSettings } | null;
   createdAt: string;
   lastLogin?: string;
 }
@@ -424,9 +431,9 @@ export const adminService = {
     }
   },
 
-  async getAdministrators(): Promise<ApiResponse<{ administrators: Administrator[]; liveSessionEvents: LiveSessionNotificationEvent[] }>> {
+  async getAdministrators(): Promise<ApiResponse<{ administrators: Administrator[]; liveSessionEvents: LiveSessionNotificationEvent[]; approvalEvents: ApprovalNotificationEvent[] }>> {
     try {
-      const response = await apiClient.get<ApiResponse<{ administrators: Administrator[]; liveSessionEvents: LiveSessionNotificationEvent[] }>>("/admin/administrators");
+      const response = await apiClient.get<ApiResponse<{ administrators: Administrator[]; liveSessionEvents: LiveSessionNotificationEvent[]; approvalEvents: ApprovalNotificationEvent[] }>>("/admin/administrators");
       return response.data;
     } catch (error: any) {
       return { success: false, message: error.response?.data?.message || "Failed to load administrators." };
@@ -442,7 +449,7 @@ export const adminService = {
     }
   },
 
-  async updateAdministrator(id: number, changes: { isActive?: boolean; hasAdminAccess?: boolean; liveSessionNotifications?: LiveSessionNotificationSettings }): Promise<ApiResponse<{ administrator: Administrator }>> {
+  async updateAdministrator(id: number, changes: { isActive?: boolean; hasAdminAccess?: boolean; liveSessionNotifications?: LiveSessionNotificationSettings; approvalNotifications?: ApprovalNotificationSettings }): Promise<ApiResponse<{ administrator: Administrator }>> {
     try {
       const response = await apiClient.put<ApiResponse<{ administrator: Administrator }>>(`/admin/administrators/${id}`, changes);
       return response.data;
