@@ -16,6 +16,7 @@ export default function AffiliateAdminPage() {
   const [filter, setFilter] = useState("all");
   const [bankDetails, setBankDetails] = useState<any | null>(null);
   const [selectedPayout, setSelectedPayout] = useState<any | null>(null);
+  const [workingReferralId, setWorkingReferralId] = useState<number | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -32,9 +33,22 @@ export default function AffiliateAdminPage() {
   useEffect(() => { load(); }, []);
 
   const referralAction = async (id: number, action: string) => {
-    const reason = action === "reject" || action === "hold" ? window.prompt(`Reason to ${action} this referral (optional):`) || undefined : undefined;
-    try { await affiliateAdminService.reviewReferral(id, action, reason); setNotice(`Referral ${action}d successfully.`); await load(); }
-    catch (requestError: any) { setError(requestError?.response?.data?.message || `Could not ${action} referral`); }
+    let reason: string | undefined;
+    if (action === "approve_manual") {
+      const input = window.prompt("Reason for manual approval (required):");
+      if (input === null) return;
+      reason = input.trim();
+      if (reason.length < 3 || reason.length > 500) { setError("Enter a reason between 3 and 500 characters."); return; }
+      if (!window.confirm("Approve this referral and add a reward without automatically recorded activity? This will clear its open risk flags.")) return;
+    } else if (action === "reject" || action === "hold") {
+      const input = window.prompt(`Reason to ${action} this referral (optional):`);
+      if (input === null) return;
+      reason = input.trim() || undefined;
+    }
+    setWorkingReferralId(id); setError(""); setNotice("");
+    try { await affiliateAdminService.reviewReferral(id, action, reason); setNotice(action === "approve_manual" ? "Referral manually approved and reward added." : `Referral ${action}d successfully.`); await load(); }
+    catch (requestError: any) { setError(requestError?.response?.data?.message || "Could not update the referral."); }
+    finally { setWorkingReferralId(null); }
   };
   const payoutAction = async (id: number, action: string) => {
     const reason = action === "reject" ? window.prompt("Reason for rejecting this payout (optional):") || undefined : undefined;
@@ -88,10 +102,10 @@ export default function AffiliateAdminPage() {
           {activeRows.length ? activeRows.map((referral) => <article className="queue-row referral-row" key={referral.id}>
             <div className="profile-bubble">{referral.referred?.firstName?.charAt(0)}{referral.referred?.lastName?.charAt(0)}</div>
             <div className="queue-person"><strong>{referral.referred?.firstName} {referral.referred?.lastName}</strong><span>{referral.referred?.vendorProfile?.shopName ? `Vendor: ${referral.referred.vendorProfile.shopName}` : referral.referred?.studentProfile?.universityName ? `Student: ${referral.referred.studentProfile.universityName}` : "New user"}</span><span>Referred by {referral.referrer?.firstName} {referral.referrer?.lastName}</span></div>
-            <div className="queue-detail"><label>Qualifying activity</label><strong>{referral.activityType === "live_session" ? "Live session join launched" : referral.activityType ? `${referral.activityType} activity` : "Awaiting activity"}</strong></div>
+            <div className="queue-detail"><label>Qualifying activity</label><strong>{referral.activityType === "live_session" ? "Live session join launched" : referral.activityType === "manual" ? "Manually approved" : referral.activityType ? `${referral.activityType} activity` : "Awaiting activity"}</strong></div>
             <div className="queue-detail"><label>Submitted</label><strong>{new Date(referral.createdAt).toLocaleDateString("en-LK")}</strong></div>
             <div className="queue-status"><span className={`status-pill ${referral.status}`}>{referral.status.replace("_", " ")}</span>{referral.riskFlags?.some((flag: any) => flag.status === "open") && <span className="risk-pill">Risk flag</span>}</div>
-            <div className="queue-actions">{pendingReferralStatuses.includes(referral.status) ? <>{referral.activityType ? <button className="approve" onClick={() => referralAction(referral.id, "approve")}>Approve</button> : <span className="complete-text">Qualifying activity required before approval</span>}<button className="hold" onClick={() => referralAction(referral.id, "hold")}>Hold</button><button className="reject" onClick={() => referralAction(referral.id, "reject")}>Reject</button></> : <span className="complete-text">No action needed</span>}</div>
+            <div className="queue-actions">{[...pendingReferralStatuses, "registered"].includes(referral.status) ? <>{referral.activityType ? <button disabled={workingReferralId === referral.id} className="approve" onClick={() => referralAction(referral.id, "approve")}>Approve</button> : <button disabled={workingReferralId === referral.id} className="approve" onClick={() => referralAction(referral.id, "approve_manual")}>Approve manually</button>}<button disabled={workingReferralId === referral.id} className="hold" onClick={() => referralAction(referral.id, "hold")}>Hold</button><button disabled={workingReferralId === referral.id} className="reject" onClick={() => referralAction(referral.id, "reject")}>Reject</button></> : <span className="complete-text">No action needed</span>}</div>
           </article>) : <EmptyQueue title="No matching referrals" copy="There are no referrals in this status right now." />}
         </div> : <div className="queue-list">
           {activeRows.length ? activeRows.map((payout) => <article className="queue-row payout-row" key={payout.id}>
