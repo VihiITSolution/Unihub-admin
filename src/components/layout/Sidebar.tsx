@@ -6,11 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
+  sidebarRef: React.RefObject<HTMLElement | null>;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ sidebarRef, isOpen, onClose }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = useAuth();
@@ -329,8 +330,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   return (
     <>
       {isOpen && <button aria-label="Close navigation" onClick={onClose} className="fixed inset-0 z-30 bg-slate-950/30 lg:hidden" />}
-      <aside className={`fixed inset-y-[73px] left-0 z-40 flex w-[280px] flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 lg:sticky lg:top-[73px] lg:z-20 lg:h-[calc(100vh-73px)] lg:w-[272px] lg:translate-x-0 lg:shadow-none ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+      <aside ref={sidebarRef} id="admin-navigation" aria-label="Admin navigation" className={`fixed inset-y-[73px] left-0 z-40 flex w-[min(280px,calc(100vw-2rem))] flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 lg:sticky lg:top-[73px] lg:z-20 lg:h-[calc(100vh-73px)] lg:w-[272px] lg:translate-x-0 lg:shadow-none ${isOpen ? 'translate-x-0' : 'invisible -translate-x-full lg:visible'}`}>
+      <div className="flex justify-end px-3 pt-2 lg:hidden"><button type="button" onClick={onClose} aria-label="Close navigation" className="grid h-11 w-11 place-items-center rounded-lg text-2xl text-slate-600 hover:bg-slate-100">×</button></div>
+      <nav className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-3 py-3">
         {menuGroups.map((group) => (
           <div key={group.label}>
             <p className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">{group.label}</p>

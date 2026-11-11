@@ -142,7 +142,7 @@ export default function TutorDetailsPage() {
 
   if (error || !tutor) {
     return (
-      <div className="p-6 min-h-screen">
+      <div className="p-0 sm:p-4 min-h-screen">
         <button
           onClick={() => router.back()}
           className="text-primary-600 hover:text-primary-900 mb-4 flex items-center cursor-pointer"
@@ -175,7 +175,7 @@ export default function TutorDetailsPage() {
   const isPending = tutor.approvalStatus === "pending";
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-0 sm:p-4 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -598,7 +598,7 @@ export default function TutorDetailsPage() {
 
       {/* Approve Confirmation Popup */}
       {showApproveConfirm && tutor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all">
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 rounded-t-lg">
@@ -717,7 +717,7 @@ export default function TutorDetailsPage() {
 
       {/* Reject Confirmation Popup */}
       {showRejectConfirm && tutor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all">
             {/* Header */}
             <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 rounded-t-lg">
@@ -841,7 +841,7 @@ export default function TutorDetailsPage() {
 
       {/* Approve Modal */}
       {showApproveModal && (
-        <div className="fixed z-10 inset-0 overflow-y-auto">
+        <div className="fixed z-50 inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
@@ -901,7 +901,7 @@ export default function TutorDetailsPage() {
 
       {/* Reject Modal */}
       {showRejectModal && (
-        <div className="fixed z-10 inset-0 overflow-y-auto">
+        <div className="fixed z-50 inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
@@ -969,7 +969,7 @@ export default function TutorDetailsPage() {
 
       {/* Success Message Popup */}
       {successMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div
             className={`bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all animate-in ${
               successMessage.type === "approve"

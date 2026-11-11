@@ -44,7 +44,7 @@ export function ConfirmDialog({
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="action-dialog-title">
+    <div className="admin-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="action-dialog-title">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <h2 id="action-dialog-title" className="text-xl font-bold text-gray-900">{title}</h2>
         <p className="mt-3 text-gray-600">{description}</p>

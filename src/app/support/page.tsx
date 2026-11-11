@@ -239,7 +239,7 @@ export default function SupportPage() {
                 })}
               </div>
             )}
-            <div className="mt-4 flex items-center justify-between border-t pt-4 text-sm">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
               <span>Page {page} of {totalPages}</span>
               <div className="flex gap-2">
                 <button disabled={page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Previous</button>

@@ -33,8 +33,8 @@ export default function ModerationConversationsPage() {
   }, []);
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-2">
+    <div className="p-0 sm:p-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">Chat Moderation</h1>
           <p className="text-gray-600">
@@ -86,7 +86,7 @@ export default function ModerationConversationsPage() {
           No conversations found.
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-gray-500">
               <tr>

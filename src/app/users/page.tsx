@@ -228,7 +228,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Users</h1>
           <p className="text-gray-600 mt-2">Manage all registered users</p>
@@ -313,7 +313,7 @@ export default function UsersPage() {
         <Table columns={columns} data={users} />
 
         {/* Pagination */}
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-gray-600">
             Page {page} of {totalPages}
           </p>
@@ -337,7 +337,7 @@ export default function UsersPage() {
       </Card>
 
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
+        <div className="admin-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="dialog" aria-modal="true" aria-labelledby="user-details-title">
           <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-slate-50 shadow-2xl">
             <div className="flex items-start justify-between border-b border-slate-200 bg-white px-6 py-5">
               <div>
@@ -481,7 +481,7 @@ export default function UsersPage() {
       )}
 
       {userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
+        <div className="admin-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="delete-user-title">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h2 id="delete-user-title" className="text-xl font-bold text-gray-900">Permanently delete user?</h2>
             <p className="mt-3 text-gray-600">

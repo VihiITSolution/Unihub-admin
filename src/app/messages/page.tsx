@@ -99,15 +99,15 @@ export default function AdminMessagesPage() {
   const activeConversation = conversations.find((c) => c.id === activeId);
 
   return (
-    <div className="p-8">
+    <div className="p-0 sm:p-4">
       <h1 className="text-3xl font-bold mb-2">Messages</h1>
       <p className="text-gray-600 mb-6">
         Answer support conversations directly as an admin.
       </p>
 
-      <div className="bg-white rounded-lg shadow-sm border flex" style={{ height: "70vh" }}>
+      <div className="flex h-[min(70vh,42rem)] min-h-[20rem] overflow-hidden rounded-lg border bg-white shadow-sm">
         {/* Conversation list */}
-        <div className="w-80 border-r overflow-y-auto">
+        <div className={`${activeId ? "hidden md:block" : "block"} w-full shrink-0 overflow-y-auto md:w-80 md:border-r`}>
           {loadingList ? (
             <div className="p-6 text-center text-gray-500">Loading...</div>
           ) : conversations.length === 0 ? (
@@ -136,17 +136,17 @@ export default function AdminMessagesPage() {
         </div>
 
         {/* Thread */}
-        <div className="flex-1 flex flex-col">
+        <div className={`${activeId ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col`}>
           {!activeId ? (
             <div className="flex-1 flex items-center justify-center text-gray-400">
               Select a conversation to view messages
             </div>
           ) : (
             <>
-              <div className="border-b p-4 font-medium text-gray-900">
+              <div className="flex items-center gap-3 border-b p-4 font-medium text-gray-900"><button type="button" onClick={() => setActiveId(null)} className="min-h-11 shrink-0 text-sm text-primary-700 md:hidden" aria-label="Back to conversations">← Back</button><span className="min-w-0 truncate">
                 {activeConversation?.otherParticipant
                   ? `${activeConversation.otherParticipant.firstName} ${activeConversation.otherParticipant.lastName}`
-                  : "Conversation"}
+                  : "Conversation"}</span>
               </div>
               <div className="flex-1 overflow-y-auto p-4">
                 {loadingThread ? (
@@ -160,7 +160,7 @@ export default function AdminMessagesPage() {
                         className={`flex mb-3 ${isOwn ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
+                          className={`max-w-[85%] break-words rounded-lg sm:max-w-[70%] px-3 py-2 text-sm ${
                             isOwn ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
                           }`}
                         >
@@ -188,7 +188,7 @@ export default function AdminMessagesPage() {
                     }
                   }}
                   placeholder="Type a reply..."
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm"
+                  className="min-w-0 flex-1 border rounded-lg px-3 py-2 text-base sm:text-sm"
                 />
                 <button
                   onClick={handleSend}

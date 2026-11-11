@@ -1370,7 +1370,7 @@ export default function CourseReviewPage() {
 
       {/* Reject/Disable Modal */}
       {rejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               {isPublished ? "Disable Course" : "Reject Course"}

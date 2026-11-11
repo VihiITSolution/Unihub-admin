@@ -54,7 +54,7 @@ export default function ModerationConversationDetailPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-0 sm:p-4">
       <button
         onClick={() => router.push("/moderation/conversations")}
         className="text-sm text-gray-600 hover:underline mb-4"
@@ -62,7 +62,7 @@ export default function ModerationConversationDetailPage() {
         ← Back to Chat Moderation
       </button>
 
-      <div className="flex justify-between items-start mb-6">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold mb-1">
             {conversation.participantOne?.firstName} {conversation.participantOne?.lastName}{" "}
@@ -99,7 +99,7 @@ export default function ModerationConversationDetailPage() {
         ) : (
           messages.map((message) => (
             <div key={message.id} className="mb-4 pb-4 border-b last:border-0">
-              <div className="flex items-center justify-between mb-1">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm font-semibold text-gray-900">
                   {message.sender.firstName} {message.sender.lastName}
                 </span>
@@ -107,7 +107,7 @@ export default function ModerationConversationDetailPage() {
                   {new Date(message.createdAt).toLocaleString()}
                 </span>
               </div>
-              {message.body && <p className="text-sm text-gray-700">{message.body}</p>}
+              {message.body && <p className="break-words text-sm text-gray-700">{message.body}</p>}
               {message.attachments?.map((attachment) => (
                 <a
                   key={attachment.id}

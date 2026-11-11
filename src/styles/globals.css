@@ -105,3 +105,11 @@ html.dark .hover\:text-slate-900:hover,
 html.dark .hover\:text-gray-900:hover {
   color: #f8fafc;
 }
+
+/* Keep mobile dialogs inside the visible viewport, including short screens. */
+.admin-modal-overlay { padding: 1rem; }
+.admin-modal-overlay > :first-child { max-height: calc(100dvh - 2rem); max-width: 100%; overflow-y: auto; overscroll-behavior: contain; }
+@media (max-width: 639px) {
+  main input, main select, main textarea { max-width: 100%; }
+  main .overflow-x-auto { max-width: 100%; }
+}

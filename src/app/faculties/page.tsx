@@ -403,7 +403,7 @@ export default function FacultiesPage() {
 
       {/* Faculty modal */}
       {showFacultyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-md">
             <div className="p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -459,7 +459,7 @@ export default function FacultiesPage() {
 
       {/* Department modal */}
       {showDeptModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-sm">
             <div className="p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">

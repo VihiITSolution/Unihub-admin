@@ -46,7 +46,7 @@ export default function AuditLogsPage() {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1); }}
             placeholder="Search action, summary, or target ID"
-            className="min-w-72 rounded-lg border border-gray-300 px-3 py-2"
+            className="w-full sm:w-auto sm:min-w-72 rounded-lg border border-gray-300 px-3 py-2"
           />
           <select value={targetType} onChange={(event) => { setTargetType(event.target.value); setPage(1); }} className="rounded-lg border border-gray-300 px-3 py-2">
             <option value="">All target types</option>
@@ -88,7 +88,7 @@ export default function AuditLogsPage() {
             </table>
           </div>
         )}
-        <div className="mt-4 flex items-center justify-between border-t pt-4 text-sm"><span>Page {page} of {totalPages}</span><div className="flex gap-2"><button disabled={page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Previous</button><button disabled={page >= totalPages} onClick={() => setPage((value) => value + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Next</button></div></div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm"><span>Page {page} of {totalPages}</span><div className="flex gap-2"><button disabled={page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded border px-3 py-1 disabled:opacity-40">Previous</button><button disabled={page >= totalPages} onClick={() => setPage((value) => value + 1)} className="rounded border px-3 py-1 disabled:opacity-40">Next</button></div></div>
       </Card>
     </div>
   );

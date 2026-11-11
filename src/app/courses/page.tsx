@@ -236,7 +236,7 @@ export default function CoursesPage() {
         <Table columns={columns} data={filteredCourses} />
 
         {/* Pagination */}
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-gray-600">
             Page {page} of {totalPages}
           </p>

@@ -105,7 +105,7 @@ export default function AdminNotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 flex max-h-[min(38rem,calc(100vh-6rem))] w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+        <div className="fixed left-4 right-4 top-[73px] z-50 sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+0.5rem)] flex max-h-[min(38rem,calc(100vh-6rem))] w-auto sm:w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div><p className="font-semibold text-slate-900">Notifications</p><p className="text-xs text-slate-500">{unreadCount ? `${unreadCount} unread` : "You’re all caught up"}</p></div>
             {unreadCount > 0 && <button type="button" onClick={markAllRead} className="text-xs font-semibold text-primary-700 hover:text-primary-900">Mark all read</button>}

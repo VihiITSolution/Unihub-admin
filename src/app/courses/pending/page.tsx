@@ -215,7 +215,7 @@ export default function PendingCoursesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Pending Approvals
@@ -268,7 +268,7 @@ export default function PendingCoursesPage() {
             <Table columns={columns} data={courses} />
 
             {/* Pagination */}
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-gray-600">
                 Page {page} of {totalPages}
               </p>
@@ -295,7 +295,7 @@ export default function PendingCoursesPage() {
 
       {/* Reject Modal */}
       {rejectModal.open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               Reject Course

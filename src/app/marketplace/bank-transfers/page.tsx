@@ -133,9 +133,9 @@ export default function BankTransfersPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-0 sm:p-4">
       {feedback && <div className="mb-6"><FeedbackBanner message={feedback.message} tone={feedback.tone} /></div>}
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">
             Bank Transfer Verification
@@ -323,7 +323,7 @@ export default function BankTransfersPage() {
 
       {/* Rejection Modal */}
       {showModal && selectedPayment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="admin-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Reject Payment</h3>
             <p className="text-gray-600 mb-4">
